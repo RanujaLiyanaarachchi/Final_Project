@@ -1,0 +1,1505 @@
+{
+  "@@locale": "en",
+
+  "app_name": "UPay",
+  "@app_name": {
+    "description": "Application name"
+  },
+
+
+
+
+
+
+
+
+
+
+  "hiThere": "Hi There,",
+  "@hiThere": {
+    "description": "Greeting message"
+  },
+
+  "welcome_to_UPay": "Welcome Back To UPay",
+  "@welcome_to_UPay": {
+    "description": "Welcome text Title"
+  },
+
+  "welcome_message": "Easy ways to manage your finances",
+  "@welcome_message": {
+    "description": "Welcome text Body"
+  },
+
+  "lets_begin": "Let’s Begin",
+  "@lets_begin": {
+    "description": "Text on the welcome screen button"
+  },
+
+
+
+
+
+
+
+
+
+
+  "sign_in": "Sign In",
+  "@sign_in": {
+    "description": "Sign in button label"
+  },
+
+  "email": "Email",
+  "@email": {
+    "description": "Email input label"
+  },
+
+  "password": "Password",
+  "@password": {
+    "description": "Password input label"
+  },
+
+  "forgot_password": "Forgot Password?",
+  "@forgot_password": {
+    "description": "Forgot password button label"
+  },
+
+  "connection_error": "Check your connection and Try again",
+  "@connection_error":{
+    "description": "Error message for connection issues"
+  },
+
+  "validating": "validating...",
+  "@validating":{
+    "description": "Loading message for validation"
+  },
+
+  "nic_verification_heading": "Validate",
+  "@nic_verification_heading": {
+    "description": "Heading for NIC verification screen"
+  },
+
+  "verifying": "verifying...",
+  "@verifying":{
+    "description": "Loading message for verification"
+  },
+
+  "enter_valid_nic_number": "Enter the correct NIC",
+  "@enter_valid_nic_number": {
+    "description": "Prompt for entering a valid NIC number"
+  },
+
+  "enter_valid_6digit_code": "Enter a valid 6-digit code",
+  "@enter_valid_6digit_code": {
+    "description": "Prompt for entering a 6-digit code"
+  },
+
+  "enter_correct_otp": "Enter the correct OTP",
+  "@enter_correct_otp": {
+    "description": "Prompt for entering the correct OTP"
+  },
+
+  "verification_code_sent_again": "Verification code sent again",
+  "@verification_code_sent_again": {
+    "description": "Message indicating the verification code was sent again"
+  },
+
+  "code_timed_out": "Request has timed out.Try again",
+  "@code_timed_out": {
+    "description": "Message indicating the code has timed out"
+  },
+
+
+
+
+
+
+
+
+
+  "forgot_password_title": "Forgot?",
+  "@forgot_password_title": {
+    "description": "Forgot password button label"
+  },
+
+  "enter_email_reset": "Dont worry! It occurs. Please enter the email address linked with your account",
+  "@enter_email_reset": {
+    "description": "Prompt for email input to reset password"
+  },
+
+  "send": "Send",
+  "@send": {
+    "description": "Send button label"
+  },
+
+
+
+
+
+
+
+
+
+
+  "reset_password": "Reset Password",
+  "@reset_password": {
+    "description": "Reset password screen title"
+  },
+
+  "new_password": "New Password",
+  "@new_password": {
+    "description": "Label for new password input"
+  },
+
+  "confirm_password": "Confirm Password",
+  "@confirm_password": {
+    "description": "Label for confirming password input"
+  },
+
+  "confirm": "Confirm",
+  "@confirm": {
+    "description": "Confirm button label"
+  },
+
+
+
+
+
+
+
+
+
+
+  "password_updated": "Update",
+  "@password_updated": {
+    "description": "Message when password is successfully updated"
+  },
+
+  "password_success_message_1": "Your password has been successfully updated. You can now use your new password to access your account securely.",
+  "@password_success_message_1": {
+    "description": "Message after successful password update"
+  },
+
+  "password_success_message_2": "If you experience any issues or have any concerns, please don't hesitate to contact our support team for assistance.",
+  "@password_success_message_2": {
+    "description": "Message after successful password update"
+  },
+
+
+
+
+
+
+
+
+
+
+
+  "welcome": "Welcome",
+  "@welcome": {
+    "description": "Welcome text on the welcome screen"
+  },
+
+
+
+
+
+  "agree_terms": "Agree to our terms and conditions?",
+  "@agree_terms": {
+    "description": "Prompt for agreeing to terms"
+  },
+
+  "no": "No",
+  "@no": {
+    "description": "Button label to reject"
+  },
+
+  "yes": "Yes",
+  "@yes": {
+    "description": "Button label to accept"
+  },
+
+  "terms_conditions": "Terms and Conditions",
+  "@terms_conditions": {
+    "description": "Terms and conditions title"
+  },
+
+  "privacy_policy": "Privacy Policy",
+  "@privacy_policy": {
+    "description": "Privacy policy title"
+  },
+
+  "home": "Home",
+  "@home": {
+    "description": "Home screen label"
+  },
+
+  "messages": "Messages",
+  "@messages": {
+    "description": "Messages tab label"
+  },
+
+  "settings": "Settings",
+  "@settings": {
+    "description": "Settings screen label"
+  },
+
+  "pay": "Pay",
+  "@pay": {
+    "description": "Pay button label"
+  },
+
+  "total_payable": "Total Payable",
+  "@total_payable": {
+    "description": "Total amount to be paid"
+  },
+
+  "payable_amount": "Payable Amount",
+  "@payable_amount": {
+    "description": "Label for payable amount"
+  },
+
+  "account_number": "Account Number",
+  "@account_number": {
+    "description": "Field label for account number"
+  },
+
+  "nic": "NIC",
+  "@nic": {
+    "description": "Field label for national ID"
+  },
+
+  "amount": "Amount",
+  "@amount": {
+    "description": "Amount input field label"
+  },
+
+  "next": "Next",
+  "@next": {
+    "description": "Next button label"
+  },
+
+  "payment_gateway": "Payment Gateway",
+  "@payment_gateway": {
+    "description": "Payment gateway screen title"
+  },
+
+  "receipt": "Receipt",
+  "@receipt": {
+    "description": "Receipt screen title"
+  },
+
+  "done": "Done",
+  "@done": {
+    "description": "Done button label"
+  },
+
+  "sign_out": "Sign Out",
+  "@sign_out": {
+    "description": "Sign out button label"
+  },
+
+  "change_language": "Change Language",
+  "@change_language": {
+    "description": "Label to change app language"
+  },
+
+  "no_messages": "No messages available",
+  "@no_messages": {
+    "description": "Message when no messages exist"
+  },
+
+  "payment_successful": "Payment Successful",
+  "@payment_successful": {
+    "description": "Payment successful message"
+  },
+
+  "download_receipt": "Download Receipt",
+  "@download_receipt": {
+    "description": "Label to download the receipt"
+  },
+
+
+
+
+
+
+
+
+
+
+  "password_reset_success": "Password reset link sent to your email",
+  "@password_reset_success": {
+    "description": "Message on successful password reset"
+  },
+
+  "password_reset_failed": "Password reset failed",
+  "@password_reset_failed": {
+    "description": "Message on failed password reset"
+  },
+
+  "password_reset": "Password Reset",
+  "@password_reset": {
+    "description": "Title for password reset"
+  },
+
+
+
+  "password_mismatch": "Passwords do not match",
+  "@password_mismatch": {
+    "description": "Error message for mismatched passwords"
+  },
+
+
+
+  "update_failed": "Update failed",
+  "@update_failed": {
+    "description": "Message when update fails"
+  },
+
+  "update_profile": "Update Profile",
+  "@update_profile": {
+    "description": "Button label to update profile"
+  },
+
+  "profile_updated": "Profile updated successfully",
+  "@profile_updated": {
+    "description": "Message after profile is updated"
+  },
+
+  "update_profile_failed": "Profile update failed",
+  "@update_profile_failed": {
+    "description": "Message if profile update fails"
+  },
+
+  "update_profile_picture": "Update Profile Picture",
+  "@update_profile_picture": {
+    "description": "Label for updating profile picture"
+  },
+
+  "upload_picture": "Upload Picture",
+  "@upload_picture": {
+    "description": "Upload picture button"
+  },
+
+  "select_picture": "Select Picture",
+  "@select_picture": {
+    "description": "Select picture button"
+  },
+
+  "profile": "Profile",
+  "@profile": {
+    "description": "Profile screen label"
+  },
+
+  "edit_profile": "Edit Profile",
+  "@edit_profile": {
+    "description": "Edit profile button"
+  },
+
+  "change_password": "Change Password",
+  "@change_password": {
+    "description": "Change password button"
+  },
+
+  "current_password": "Current Password",
+  "@current_password": {
+    "description": "Label for current password field"
+  },
+
+  "current_password_incorrect": "Current password is incorrect",
+  "@current_password_incorrect": {
+    "description": "Error message for incorrect current password"
+  },
+
+  "current_password_required": "Current password is required",
+  "@current_password_required": {
+    "description": "Validation message for current password"
+  },
+
+  "new_password_required": "New password is required",
+  "@new_password_required": {
+    "description": "Validation message for new password"
+  },
+
+  "confirm_password_required": "Confirm password is required",
+  "@confirm_password_required": {
+    "description": "Validation message for confirm password"
+  },
+
+
+
+
+  "dashboard": "Dashboard",
+  "@dashboard": {
+    "description": "Dashboard screen label"
+  },
+
+
+
+  "bill": "Bill",
+  "@bill": {
+    "description": "Bill section label"
+  },
+
+  "total_amount_due": "Total Amount Due",
+  "@total_amount_due": {
+    "description": "Label for total amount due"
+  },
+
+  "payment_details": "Payment Details",
+  "@payment_details": {
+    "description": "Label for payment details section"
+  },
+
+  "confirm_payment": "Confirm Payment",
+  "@confirm_payment": {
+    "description": "Button label to confirm payment"
+  },
+
+  "confirm_payment_of": "Confirm Payment of",
+  "@confirm_payment_of": {
+    "description": "Prompt to confirm specific payment amount"
+  },
+
+  "pay_now": "Pay Now",
+  "@pay_now": {
+    "description": "Pay now button label"
+  },
+
+  "proceed_with_payment": "Proceed with Payment",
+  "@proceed_with_payment": {
+    "description": "Proceed with payment label"
+  },
+
+  "cancel": "Cancel",
+  "@cancel": {
+    "description": "Cancel button label"
+  },
+
+  "proceed_to_payment": "Proceed to Payment",
+  "@proceed_to_payment": {
+    "description": "Button label to go to payment screen"
+  },
+
+  "notifications": "Notifications",
+  "@notifications": {
+    "description": "Notifications screen label"
+  },
+
+  "no_new_notifications": "No new notifications",
+  "@no_new_notifications": {
+    "description": "Message when no new notifications"
+  },
+
+  "back_to_dashboard": "Back to Dashboard",
+  "@back_to_dashboard": {
+    "description": "Button to return to dashboard"
+  },
+
+  "no_outstanding_liabilities": "You have no outstanding liabilities.",
+  "@no_outstanding_liabilities": {
+    "description": "Message when no liabilities"
+  },
+
+  "bill_payments": "Bill Payments",
+  "@bill_payments": {
+    "description": "Bill payments section title"
+  },
+
+  "no_bills_available": "No bills available",
+  "@no_bills_available": {
+    "description": "Message when no bills are present"
+  },
+
+  "no_new_messages": "No new messages",
+  "@no_new_messages": {
+    "description": "Message when inbox is empty"
+  },
+
+  "selectLanguage": "Select Language",
+  "@selectLanguage": {
+    "description": "Dropdown label for selecting language"
+  },
+
+  "sign_Out": "Sign Out",
+  "@sign_Out": {
+    "description": "Sign out button label (duplicate, lowercase key recommended)"
+  },
+
+  "settings_title": "Settings",
+  "@settings_title": {
+    "description": "Settings page title"
+  },
+
+  "select_language": "Select Language",
+  "@select_language": {
+    "description": "Prompt text for language selection"
+  },
+
+
+  "helloUser": "Hello {name},",
+  "@helloUser": {
+    "description": "Greeting message with user's name",
+    "placeholders": {
+      "name": {
+        "type": "String",
+        "example": "Ranuja"
+      }
+    }
+  },
+
+  "welcomeBack": "Welcome back",
+  "@welcomeBack": {
+    "description": "Welcome back message"
+  },
+
+  "myLiabilities": "My Liabilities",
+  "@myLiabilities": {
+    "description": "Label for user's liabilities"
+  },
+
+  "seeDetails": "See details",
+  "@seeDetails": {
+    "description": "Button label to see details"
+  },
+
+  "monthlyInstallment": "Monthly Installment",
+  "@monthlyInstallment": {
+    "description": "Label for monthly installment"
+  },
+
+  "nextInstallment": "Next Month Installment",
+  "@nextInstallment": {
+    "description": "Label for next installment"
+  },
+
+  "includesArrearsInstallments": "Includes Arrears Installments",
+  "@includesArrearsInstallments": {
+    "description": "Label for including arrears in installments"
+  },
+
+  "paid": "Paid",
+  "@paid": {
+    "description": "Label for paid status"
+  },
+
+  "remainingBalanceDue": "Remaining Balance Due",
+  "@remainingBalanceDue": {
+    "description": "Label for remaining balance due"
+  },
+
+  "supportMessage": "If there is any problem, don't panic",
+  "@supportMessage": {
+    "description": "Support message for users"
+  },
+
+  "supportDescription": "For any issues or concerns, feel free to reach out to our support team. We're here to help! 😊❤",
+  "@supportDescription": {
+    "description": "Description for support message"
+  },
+
+  "completed": "Completed",
+  "@completed": {
+    "description": "Label for completed status"
+  },
+
+  "payments": "Payments",
+  "@payments": {
+    "description": "Payments section title"
+  },
+
+  "full_name": "Full Name",
+  "@full_name": {
+    "description": "Label for full name input"
+  },
+
+  "nic_number": "NIC Number",
+  "@nic_number": {
+    "description": "Label for NIC number input"
+  },
+
+  "address": "Address",
+  "@address": {
+    "description": "Label for address input"
+  },
+
+  "birth_day": "Birth Day",
+  "@birth_day": {
+    "description": "Label for birth date input"
+  },
+
+  "gender": "Gender",
+  "@gender": {
+    "description": "Label for gender input"    
+  },
+  
+  "land_line": "Land Line",
+  "@land_line": {
+    "description": "Label for landline number input"
+  },
+
+  "mobile": "Mobile",
+  "@mobile": {
+    "description": "Label for mobile number input"
+  },
+
+  "clear_all": "Clear All",
+  "@clear_all": {
+    "description": "Button label to clear all fields"
+  },
+
+  "opening_with_viewer": "Opening with viewer...",
+  "@opening_with_viewer": {
+    "description": "Label for opening with viewer status"
+  },
+
+  "no_new_notifications_message": "\n We’ll let you know when there will be \n something  to update you.",
+  "@no_new_notifications_message": {
+    "description": "Message when there are no new notifications"
+  },
+
+  "opening_remote_file": "Opening remote file...",
+  "@opening_remote_file": {
+    "description": "Label for opening remote file status"
+  },
+
+  "fileservices": "File Services",
+  "@fileservices": {
+    "description": "Label for file services section"
+  },
+
+  "message_details": "Message Details",
+  "@message_details": {
+    "description": "Label for message details"
+  },
+
+  "date_not_available": "Date not available",
+  "@date_not_available": {
+    "description": "Label for unavailable date"
+  },
+
+  "no_content": "No content available",
+  "@no_content": {
+    "description": "Message when there is no content"
+  },
+
+  "downloading": "Downloading...",
+  "@downloading": {
+    "description": "Label for downloading status"
+  },
+
+  "open": "Open",
+  "@open": {
+    "description": "Button label to open a file or link"
+  },
+
+  "share": "Share",
+  "@share": {
+    "description": "Button label to share a file or link"
+  },
+
+  "file_url_not_available": "File URL not available",
+  "@file_url_not_available": {
+    "description": "Error message when file URL is not available"
+  },
+
+  "opening": "Opening...",
+  "@opening": {
+    "description": "Label for opening status"
+  },
+
+  "file_ready_opening": "File is ready. Opening...",
+  "@file_ready_opening": {
+    "description": "Message when file is ready to open"
+  },
+
+  "download_failed": "Download failed",
+  "@download_failed": {
+    "description": "Error message when download fails"
+  },
+
+  "no_app_for_file": "No app available to open this file",
+  "@no_app_for_file": {
+    "description": "Error message when no app is available to open the file"
+  },
+
+  "delete_message": "Delete Message",
+  "@delete_message": {
+    "description": "Button label to delete a message"
+  },
+
+  "delete_message_confirmation": "Are you sure you want to delete this message?",
+  "@delete_message_confirmation": {
+    "description": "Confirmation message for deleting a message"
+  },
+
+  "opening_failed_downloading": "Opening failed. Downloading...",
+  "@opening_failed_downloading": {
+    "description": "Message when opening fails and downloading"
+  },
+
+  "storage_permission_required": "Storage permission required",
+  "@storage_permission_required": {
+    "description": "Error message when storage permission is required"
+  },
+
+  "file_downloaded": "File downloaded",
+  "@file_downloaded": {
+    "description": "Message when file is downloaded"
+  },
+
+  "download_error": "Download error",
+  "@download_error": {
+    "description": "Error message when download fails"
+  },
+
+  "preparing_to_share": "Preparing to share...",
+  "@preparing_to_share": {
+    "description": "Label for preparing to share status"
+  },
+
+  "clear_all_messages": "Clear All Messages",
+  "@clear_all_messages": {
+    "description": "Button label to clear all messages"
+  },
+
+  "clear_all_messages_confirmation": "Are you sure you want to clear all messages?",
+  "@clear_all_messages_confirmation": {
+    "description": "Confirmation message for clearing all messages"
+  },
+
+  "sharing": "Sharing...",
+  "@sharing": {
+    "description": "Label for sharing status"
+  },
+
+  "sharing_error": "Sharing error",
+  "@sharing_error": {
+    "description": "Error message when sharing fails"
+  },
+
+  "downloading_for_viewing": "Downloading for viewing...",
+  "@downloading_for_viewing": {
+    "description": "Label for downloading for viewing status"
+  },
+
+  "loadingMessages": "Loading messages...",
+  "@loadingMessages": {
+    "description": "Label for loading messages status"
+  },
+
+
+
+
+  "total_arrears": "Total Arrears:",
+  "@total_arrears": {
+    "description": "Label for total arrears amount"
+  },
+
+  "last_bill_amount": "Last Bill Amount",
+  "@last_bill_amount": {
+    "description": "Label for last bill amount"
+  },
+
+  "last_payment_amount": "Last Payment Amount",
+  "@last_payment_amount": {
+    "description": "Label for last payment amount"
+  },
+
+  "myFinanceWere": "My Finances Were",
+  "@myFinanceWere": {
+    "description": "Label for user's finances"
+  },
+
+  "on": "On",
+  "@on": {
+    "description": "Label for date or time"
+  },
+  
+  "anuradhapura": "Anuradhapura",
+  "@anuradhapura": {
+    "description": "Label for Anuradhapura location"
+  },
+
+  "uniconFinance": "Unicon Finance",
+  "@uniconFinance": {
+    "description": "Label for Unicon Finance company"
+  },
+
+  "tapToViewOnMap": "Tap to view on map",
+  "@tapToViewOnMap": {
+    "description": "Label to view location on map"
+  },
+  
+  "biometrics": "Biometrics",
+  "@biometrics": {
+    "description": "Label for biometric authentication"
+  },
+
+  "set_up_pin": "Set up PIN",
+  "@set_up_pin": {
+    "description": "Label for setting up a PIN"
+  },
+
+  "create_pin_message": "Create a 4-digit PIN to secure your account.",
+  "@create_pin_message": {
+    "description": "Message for creating a PIN"
+  },
+
+  "confirm_pin_message": "Confirm your 4-digit PIN.",
+  "@confirm_pin_message": {
+    "description": "Message for confirming a PIN"
+  },
+
+  "save_pin": "Save PIN",
+  "@save_pin": {
+    "description": "Button label to save the PIN"
+  },
+
+  "disable": "Disable",
+  "@disable": {
+    "description": "Button label to disable a feature"
+  },
+
+  "enter_pin": "Enter PIN",
+  "@enter_pin": {
+    "description": "Label for entering a PIN"
+  },
+
+  "confirm_pin": "Confirm PIN",
+  "@confirm_pin": {
+    "description": "Label for confirming a PIN"
+  },
+
+  "profile_image_updated": "Profile image updated",
+  "@profile_image_updated": {
+    "description": "Message when profile image is updated"
+  },
+
+  "profile_image_update_failed": "Profile image update failed",
+  "@profile_image_update_failed": {
+    "description": "Message when profile image update fails"
+  },
+
+  "clean_app_data": "Clean App Data",
+  "@clean_app_data": {
+    "description": "Label for cleaning app data"
+  },
+
+  "clean_app_data_message": "This will remove all app data and reset the app to its initial state.",
+  "@clean_app_data_message": {
+    "description": "Message for cleaning app data"
+  },
+
+  "data_cleaned_restarting": "Data cleaned. Restarting app...",
+  "@data_cleaned_restarting": {
+    "description": "Message when app data is cleaned and restarting"
+  },
+
+  "sign_out_confirm_message": "Are you sure you want to sign out?",
+  "@sign_out_confirm_message": {
+    "description": "Confirmation message for signing out"
+  },
+
+  "sign_out_error": "Error signing out",
+  "@sign_out_error": {
+    "description": "Error message when signing out fails"
+  },
+
+  "auto_sign_out": "Auto Sign Out",
+  "@auto_sign_out": {
+    "description": "Label for auto sign out feature"
+  },
+
+  "clean_data": "Clean Data",
+  "@clean_data": {
+    "description": "Label for cleaning data"
+  },
+
+  "about_us": "About Us",
+  "@about_us": {
+    "description": "Label for about us section"
+  },
+
+  "app_guide": "App Guide",
+  "@app_guide": {
+    "description": "Label for app guide section"
+  },
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+  "my_liability": "My Liability",
+  "@my_liability": {
+    "description": "Label for user's liability"
+  },
+
+  "your_finance_details": "Your Finance Details",
+  "@your_finance_details": {
+    "description": "Label for user's finance details"
+  },
+
+  "first_name": "First Name:",
+  "@first_name": {
+    "description": "Label for first name input"
+  },
+
+  "vehicle_number": "Vehicle Number:",
+  "@vehicle_number": {
+    "description": "Label for vehicle number input"
+  },
+
+  "loan_amount": "Loan Amount:",
+  "@loan_amount": {
+    "description": "Label for loan amount input"
+  },
+
+  "opening_date": "Opening Date:",
+  "@opening_date": {
+    "description": "Label for opening date input"
+  },
+
+  "interest_rate": "Interest Rate:",
+  "@interest_rate": {
+    "description": "Label for interest rate input"
+  },
+
+  "maturity_date": "Maturity Date:",
+  "@maturity_date": {
+    "description": "Label for maturity date input"
+  },
+
+  "balance": "Balance:",
+  "@balance": {
+    "description": "Label for balance amount"
+  },
+
+  "next_installment_date": "Next Installment Date:",
+  "@next_installment_date": {
+    "description": "Label for next installment date"
+  },
+
+  "next_installment_amount": "Next Installment Amount:",
+  "@next_installment_amount": {
+    "description": "Label for next installment amount"
+  },
+
+  "remaining_installments": "Remaining Installments:",
+  "@remaining_installments": {
+    "description": "Label for remaining installments"
+  },
+
+
+  "call": "Call",
+  "@call": {
+    "description": "Button label to call"
+  },
+
+  "whatsapp": "WhatsApp",
+  "@whatsapp": {
+    "description": "Button label to open WhatsApp"
+  },
+
+  "website": "Website",
+  "@website": {
+    "description": "Button label to open website"
+  },
+
+  "fax": "Fax",
+  "@fax": {
+    "description": "Button label to send fax"
+  },
+
+  "mail": "Mail",
+  "@mail": {
+    "description": "Button label to send mail"
+  },
+
+  "message": "Message",
+  "@message": {
+    "description": "Button label to send message"
+  },
+
+  "location": "Location",
+  "@location": {
+    "description": "Button label to show location"
+  },
+
+  "payment": "Payment",
+  "@payment": {
+    "description": "Button label for payment"
+  },
+
+  "amount_to_be_paid": "Amount to be paid",
+  "@amount_to_be_paid": {
+    "description": "Label for amount to be paid"
+  },
+
+  "pay_bill": "Pay Bill",
+  "@pay_bill": {
+    "description": "Button label to pay bill"
+  },
+
+  "pay_amount": "Pay Amount",
+  "@pay_amount": {
+    "description": "Label for amount to be paid"
+  },
+
+  "payment_success_title": "Payment Successful",
+  "@payment_success_title": {
+    "description": "Title for payment success message"
+  },
+
+  "payment_success_subtitle": "Your payment was successful!",
+  "@payment_success_subtitle": {
+    "description": "Subtitle for payment success message"
+  },
+
+  "payment_status": "Payment Status",
+  "@payment_status": {
+    "description": "Label for payment status"
+  },
+
+  "success": "Success",
+  "@success": {
+    "description": "Label for success status"
+  },
+
+  "name": "Name",
+  "@name": {
+    "description": "Label for name input"
+  },
+
+  "sender": "Sender",
+  "@sender": {
+    "description": "Label for sender input"
+  },
+
+  "get_pdf_receipt": "Get PDF Receipt",
+  "@get_pdf_receipt": {
+    "description": "Button label to get PDF receipt"
+  },
+
+  "notifications_title": "Notifications",
+  "@notifications_title": {
+    "description": "Title for notifications screen"
+  },
+
+  "change_username": "Change Username",
+  "@change_username": {
+    "description": "Label for changing username"
+  },
+
+  "two_factor_authentication": "Two-Factor Authentication",
+  "@two_factor_authentication": {
+    "description": "Label for two-factor authentication"
+  },
+
+  "language": "Language",
+  "@language": {
+    "description": "Label for language selection"
+  },
+
+  "app_lock": "App Lock",
+  "@app_lock": {
+    "description": "Label for app lock feature"
+  },
+
+  "notification": "notification",
+  "@notification": {
+    "description": "Label for notification"
+  },
+
+
+  "invalid_nic_format": "Invalid NIC format",
+  "@invalid_nic_format": {
+    "description": "Error message for invalid NIC format"
+  },
+
+  "nic_not_registered": "NIC not registered",
+  "@nic_not_registered": {
+    "description": "Error message for unregistered NIC"
+  },
+
+  "error_checking_nic": "Error checking NIC",
+  "@error_checking_nic": {
+    "description": "Error message for NIC check failure"
+  },
+
+  "verification_failed": "Verification failed",
+  "@verification_failed": {
+    "description": "Error message for verification failure"
+  },
+
+  "verification_failed_message": "Verification failed. Please try again.",
+  "@verification_failed_message": {
+    "description": "Message for verification failure"
+  },
+
+  "nic_required": "NIC is required",
+  "@nic_required": {
+    "description": "Validation message for NIC input"
+  },
+
+  "verify_nic": "Verify NIC",
+  "@verify_nic": {
+    "description": "Button label to verify NIC"
+  },
+
+  "phone_required": "Phone number is required",
+  "@phone_required": {
+    "description": "Validation message for phone number input"
+  },
+
+  "invalid_phone_format": "Invalid phone number format",
+  "@invalid_phone_format": {
+    "description": "Error message for invalid phone number format"
+  },
+
+  "sign_in_help_text": "Please enter your email and password to sign in.",
+  "@sign_in_help_text": {
+    "description": "Help text for sign-in screen"
+  },
+
+  "invalid_phone": "Invalid phone number",
+  "@invalid_phone": {
+    "description": "Error message for invalid phone number"
+  },
+
+  "otp_verification": "Verification",
+  "@otp_verification": {
+    "description": "Title for OTP verification screen"
+  },
+
+  "verification_code": "Verification Code",
+  "@verification_code": {
+    "description": "Label for verification code input"
+  },
+
+  "code_sent_to": "Code sent to",
+  "@code_sent_to": {
+    "description": "Message indicating where the code was sent"
+  },
+
+  "verify": "Verify",
+  "@verify": {
+    "description": "Button label to verify OTP"
+  },
+
+  "didnt_receive_code": "Didn't receive the code?",
+  "@didnt_receive_code": {
+    "description": "Message for resending OTP code"
+  },
+
+  "resend": "Resend",
+  "@resend": {
+    "description": "Button label to resend OTP code"
+  },
+
+  "nic_help_text": "Please enter your NIC number for verification.",
+  "@nic_help_text": {
+    "description": "Help text for NIC input"
+  },
+
+  "nic_verification": "Verification",
+  "@nic_verification": {
+    "description": "Title for NIC verification screen"
+  },
+
+  "enter_nic": "Enter correct NIC",
+  "@enter_nic": {
+    "description": "Label for entering NIC number"
+  },
+
+  "nic_verification_message": "Verify your identity.",
+  "@nic_verification_message": {
+    "description": "Message for NIC verification"
+  },
+
+  "phone_number": "Phone Number",
+  "@phone_number": {
+    "description": "Label for phone number input"
+  },
+
+  "customer_id": "Customer ID",
+  "@customer_id": {
+    "description": "Label for customer ID input"
+  },
+
+  "minutes_ago": "minutes ago",
+  "@minutes_ago": {
+    "description": "Label for time elapsed in minutes"
+  },
+
+  "hours_ago": "hours ago",
+  "@hours_ago": {
+    "description": "Label for time elapsed in hours"
+  },
+
+  "days_ago": "days ago",
+  "@days_ago": {
+    "description": "Label for time elapsed in days"
+  },
+
+  "unknown_date": "Unknown date",
+  "@unknown_date": {
+    "description": "Label for unknown date"
+  },
+
+  "reference": "Reference",
+  "@reference": {
+    "description": "Label for reference input"
+  },
+
+  "close": "Close",
+  "@close": {
+    "description": "Button label to close a dialog or screen"
+  },
+
+  "reply": "Reply",
+  "@reply": {
+    "description": "Button label to reply to a message"
+  },
+
+  "clear_all_notifications": "Clear All Notifications", 
+  "@clear_all_notifications": {
+    "description": "Button label to clear all notifications"
+  },
+
+  "clear_all_confirmation": "Are you sure you want to clear all notifications?",
+  "@clear_all_confirmation": {
+    "description": "Confirmation message for clearing all notifications"
+  },
+
+  "delete_all": "Delete All",
+  "@delete_all": {
+    "description": "Button label to delete all notifications"
+  },
+
+  "refresh": "Refresh",
+  "@refresh": {
+    "description": "Button label to refresh the screen"
+  },
+
+  "error_loading_notifications": "Error loading notifications",
+  "@error_loading_notifications": {
+    "description": "Error message when loading notifications fails"
+  },
+
+  "failed_load_notifications": "Failed to load notifications",
+  "@failed_load_notifications": {
+    "description": "Error message when loading notifications fails"
+  },
+
+  "try_again": "Try Again",
+  "@try_again": {
+    "description": "Button label to try again"
+  },
+
+  "loading_notifications": "Loading notifications...",
+  "@loading_notifications": {
+    "description": "Loading message for notifications"
+  },
+
+  "attachments": "Attachments",
+  "@attachments": {
+    "description": "Label for attachments in messages"
+  },
+
+  "download": "Download",
+  "@download": {
+    "description": "Button label to download an attachment"
+  },
+
+  "image_load_error": "Error loading image",
+  "@image_load_error": {
+    "description": "Error message when loading an image fails"
+  },
+
+  "attachment": "Attachment",
+  "@attachment": {
+    "description": "Label for an attachment"
+  },
+
+  "delete": "Delete",
+  "@delete": {
+    "description": "Button label to delete an item"
+  },
+
+  "more_attachments": "More Attachments",
+  "@more_attachments": {
+    "description": "Label for additional attachments"
+  },
+
+  "more_attachment": "More Attachment",
+  "@more_attachment": {
+    "description": "Label for a single additional attachment"
+  },
+
+  "clear_all_notifications_confirm": "Are you sure you want to clear all notifications? This action cannot be undone.",
+  "@clear_all_notifications_confirm": {
+    "description": "Confirmation message for clearing all notifications"
+  },
+
+  "notifications_cleared": "Notifications cleared",
+  "@notifications_cleared": {
+    "description": "Message when notifications are cleared"
+  },
+
+  "clear": "Clear",
+  "@clear": {
+    "description": "Button label to clear an input or selection"
+  },
+
+  "retry": "Retry", 
+  "@retry": {
+    "description": "Button label to retry an action"
+  },
+
+  "no_notifications": "No notifications available",
+  "@no_notifications": {
+    "description": "Message when there are no notifications"
+  },
+
+  "no_notifications_message": "You have no notifications at the moment.",
+  "@no_notifications_message": {
+    "description": "Message when there are no notifications"
+  },
+
+  "today": "Today",
+  "@today": {
+    "description": "Label for today's date"
+  },
+
+  "open_link": "Open Link",
+  "@open_link": {
+    "description": "Button label to open a link"
+  },
+
+  "clear_all_notifications_message": "Are you sure you want to clear all notifications? This action cannot be undone.",
+  "@clear_all_notifications_message": {
+    "description": "Confirmation message for clearing all notifications"
+  },
+
+  "enter_valid_nic_and_phone": "Enter a valid NIC and phone number.",
+  "@enter_valid_nic_and_phone": {
+    "description": "Error message for invalid NIC and phone number"
+  },
+
+  "enter_valid_nic": "Enter a valid NIC.",
+  "@enter_valid_nic": {
+    "description": "Error message for invalid NIC"
+  },
+
+  "nic_incorrect_format": "NIC is in incorrect format.",
+  "@nic_incorrect_format": {
+    "description": "Error message for incorrect NIC format"
+  },
+
+  "enter_valid_phone": "Enter a valid phone number.",
+  "@enter_valid_phone": {
+    "description": "Error message for invalid phone number"
+  },
+
+  "phone_must_be_10_digits": "Phone number is in incorrect format.",
+  "@phone_must_be_10_digits": {
+    "description": "Error message for phone number length"
+  },
+
+  "noNotificationsYet": "No notifications yet",
+  "@noNotificationsYet": {
+    "description": "Message when there are no notifications yet"
+  },
+
+  "cancel_clean": "Cancel",
+  "@cancel_clean": {
+    "description": "Button label to cancel cleaning data"
+  },
+
+  "confirm_clean": "Confirm",
+  "@confirm_clean": {
+    "description": "Button label to confirm cleaning data"
+  },
+
+  "support": "Support",
+  "@support": {
+    "description": "Label for support section"
+  },
+
+  "copied": "Copied",
+  "@copied": {
+    "description": "Message indicating text was copied"
+  },
+
+  "all": "All",
+  "@all": {
+    "description": "Label for all items or categories"
+  },
+
+  "unread": "Unread",
+  "@unread": {
+    "description": "Label for unread items or messages"
+  },
+
+  "mark_all_as_read": "Mark all as read",
+  "@mark_all_as_read": {
+    "description": "Button label to mark all notifications as read"
+  },
+
+  "view": "View all",
+  "@view": {
+    "description": "Button label to view all items or messages"
+  },
+
+  "notification_empty_message": "No notifications available",
+  "@notification_empty_message": {
+    "description": "Message when there are no notifications"
+  },
+
+  "delete_notification_confirmation": "Are you sure you want to delete this notification?",
+  "@delete_notification_confirmation": {
+    "description": "Confirmation message for deleting a notification"
+  },
+
+  "bill_summary": "Bill Summary",
+  "@bill_summary": {
+    "description": "Label for bill summary section"
+  },
+
+  "monthly_bill": "Monthly Bill",
+  "@monthly_bill": {
+    "description": "Label for monthly bill amount"
+  },
+
+  "current_bill": "Current Bill",
+  "@current_bill": {
+    "description": "Label for current bill amount"
+  },
+
+  "bills": "Bills",
+  "@bills": {
+    "description": "Label for bills section"
+  },
+
+  "delete_notification": "Delete Notification",
+  "@delete_notification": {
+    "description": "Button label to delete a notification"
+  },
+
+  "error_deleting_message": "Error deleting message",
+  "@error_deleting_message": {
+    "description": "Error message when deleting a message fails"
+  }
+
+}
