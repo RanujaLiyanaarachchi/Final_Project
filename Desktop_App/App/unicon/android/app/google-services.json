@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "192169165327",
+    "project_id": "unicon-finance-srilanka",
+    "storage_bucket": "unicon-finance-srilanka.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:192169165327:android:35775eda051a4af957997a",
+        "android_client_info": {
+          "package_name": "com.example.unicon"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCIqenpHBvsUCSQuDctnKfuVpIX2qBqvLM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
