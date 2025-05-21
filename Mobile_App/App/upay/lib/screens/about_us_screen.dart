@@ -38,10 +38,8 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
       backgroundColor: const Color(0xFFF8F9FD),
       body: Column(
         children: [
-          // Use the same app bar style as LiabilityScreen
           const SizedBox(height: 74),
-          
-          // Custom AppBar similar to LiabilityScreen
+
           Stack(
             alignment: Alignment.center,
             children: [
@@ -69,12 +67,12 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                   color: Colors.black,
                 ),
               ),
-              // Balancing the layout with an empty container on the right side
+
               const SizedBox(width: 48),
             ],
           ),
           const SizedBox(height: 30),
-          
+
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
@@ -85,7 +83,6 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                   children: [
                     const SizedBox(height: 0),
 
-                    // App logo
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
@@ -93,7 +90,7 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withAlpha(26), // 0.1 * 255 = ~26
+                            color: Colors.grey.withAlpha(26),
                             spreadRadius: 1,
                             blurRadius: 20,
                             offset: const Offset(0, 4),
@@ -109,22 +106,20 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                         ),
                       ),
                     ),
-                    
+
                     const SizedBox(height: 10),
-                    
-                    // App version
+
                     Text(
                       isLoading ? 'Loading...' : 'Version $appVersion',
                       style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey[600],
-                      fontWeight: FontWeight.w500,
+                        fontSize: 12,
+                        color: Colors.grey[600],
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    
+
                     const SizedBox(height: 50),
 
-                    // Mission section with card
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -132,14 +127,14 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Theme.of(context).primaryColor.withAlpha(230), // 0.9 * 255 ≈ 230
-                            Theme.of(context).primaryColor.withAlpha(179), // 0.7 * 255 ≈ 179
+                            Theme.of(context).primaryColor.withAlpha(230),
+                            Theme.of(context).primaryColor.withAlpha(179),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Theme.of(context).primaryColor.withAlpha(77), // 0.3 * 255 ≈ 77
+                            color: Theme.of(context).primaryColor.withAlpha(77),
                             spreadRadius: 2,
                             blurRadius: 15,
                             offset: const Offset(0, 4),
@@ -169,10 +164,9 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
-                    
-                    // Company statement
+
                     Container(
                       padding: const EdgeInsets.all(24),
                       decoration: BoxDecoration(
@@ -180,7 +174,7 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                         borderRadius: BorderRadius.circular(20),
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.grey.withAlpha(26), // 0.1 * 255 ≈ 26
+                            color: Colors.grey.withAlpha(26),
                             spreadRadius: 1,
                             blurRadius: 20,
                             offset: const Offset(0, 4),
@@ -210,10 +204,9 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 50),
 
-                    // App features section
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.symmetric(vertical: 20),
@@ -224,36 +217,32 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                       child: Column(
                         children: [
                           _buildFeatureItem(
-                            context, 
-                            Icons.security_rounded, 
+                            context,
+                            Icons.security_rounded,
                             'Secure Transactions',
                             'End-to-end encryption for all payments',
                           ),
                           _buildFeatureItem(
-                            context, 
-                            Icons.speed_rounded, 
+                            context,
+                            Icons.speed_rounded,
                             'Fast Processing',
                             'Real-time transaction processing',
                           ),
                           _buildFeatureItem(
-                            context, 
-                            Icons.support_agent_rounded, 
+                            context,
+                            Icons.support_agent_rounded,
                             '24/7 Support',
                             'Always available customer service',
                           ),
                         ],
                       ),
                     ),
-                    
+
                     const SizedBox(height: 40),
-                    
-                    // Copyright section
+
                     Text(
                       '© ${DateTime.now().year} UPay. All rights reserved.',
-                      style: TextStyle(
-                        fontSize: 14,
-                        color: Colors.grey[600],
-                      ),
+                      style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                     ),
                     const SizedBox(height: 8),
                     Text(
@@ -275,7 +264,12 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
     );
   }
 
-  Widget _buildFeatureItem(BuildContext context, IconData icon, String title, String description) {
+  Widget _buildFeatureItem(
+    BuildContext context,
+    IconData icon,
+    String title,
+    String description,
+  ) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
       child: Row(
@@ -283,14 +277,10 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
           Container(
             padding: const EdgeInsets.all(10),
             decoration: BoxDecoration(
-              color: Theme.of(context).primaryColor.withAlpha(26), // 0.1 * 255 ≈ 26
+              color: Theme.of(context).primaryColor.withAlpha(26),
               borderRadius: BorderRadius.circular(12),
             ),
-            child: Icon(
-              icon,
-              color: Theme.of(context).primaryColor,
-              size: 24,
-            ),
+            child: Icon(icon, color: Theme.of(context).primaryColor, size: 24),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -307,10 +297,7 @@ class _AboutUsScreenState extends State<AboutUsScreen> {
                 const SizedBox(height: 4),
                 Text(
                   description,
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
+                  style: TextStyle(color: Colors.grey[600], fontSize: 14),
                 ),
               ],
             ),
