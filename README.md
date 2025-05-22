@@ -36,6 +36,36 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
 4. Run the app:
     flutter run
 
+5. Sign in using NIC:
+    Use one of the following test NIC numbers:
+    - 123456789123
+    - 987654321987
+
+6. Sign in using Phone Number:
+    Use the following test credentials:
+    - Phone number: 0760620019
+    - OTP: 123456
+
+## Important Testing Information
+
+    > **Note:** You can use your real phone number and enter the received OTP during authentication. You can also sign in with your real NIC number after adding your personal data through the admin panel.
+
+    > **Admin Panel Access:** To manage user data, access the desktop admin panel application here: [Admin Panel](https://github.com/RanujaLiyanaarachchi/Final_Project/tree/e5c332bf4fb35d63e200476a8a593a19f86e5a42/Desktop_App)
+
+    > **Adding Your Data:** To use the app with your real information, access the admin panel from our GitHub repository, set up your personal and financial details, and then sign in using your actual NIC number to view your real data.
+
+    > **For Evaluation:** If you prefer to test first, use the provided test NICs which have been pre-configured with sample financial data.
+
+    ## Source Code Access
+
+    Access the complete source code for both applications:
+
+    - **Mobile Application**: The main UPay mobile application built with Flutter
+    - **Admin Panel**: Desktop application for managing user data and system administration
+
+    Both are available in our GitHub repository:
+    [UPay Project Repository](https://github.com/RanujaLiyanaarachchi/Final_Project.git)
+    
 ## Project Structure
 
 - **lib/**
