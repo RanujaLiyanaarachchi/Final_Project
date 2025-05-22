@@ -48,19 +48,15 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
 
 ## Important Testing Information
 
+1.     You can use your real phone number and enter the received OTP during authentication. You can also sign in with your real NIC number after adding your personal data through the admin panel.
+
+2. Admin Panel Access: To manage user data, access the desktop admin panel application here:
+
     <https://github.com/RanujaLiyanaarachchi/Final_Project/tree/cd5907b1fb2733638173315f792e590eb5d61ede/Desktop_App>
 
+3. Adding Your Data: To use the app with your real information, access the admin panel from our GitHub repository, set up your personal and financial details, and then sign in using your actual NIC number to view your real data.
 
-
-    You can use your real phone number and enter the received OTP during authentication. You can also sign in with your real NIC number after adding your personal data through the admin panel.
-
-    Admin Panel Access: To manage user data, access the desktop admin panel application here:
-    
-    <https://github.com/RanujaLiyanaarachchi/Final_Project/tree/cd5907b1fb2733638173315f792e590eb5d61ede/Desktop_App>
-
-    Adding Your Data: To use the app with your real information, access the admin panel from our GitHub repository, set up your personal and financial details, and then sign in using your actual NIC number to view your real data.
-
-    For Evaluation: If you prefer to test first, use the provided test NICs which have been pre-configured with sample financial data.
+4. For Evaluation: If you prefer to test first, use the provided test NICs which have been pre-configured with sample financial data.
 
 ## Source Code Access
 
@@ -70,8 +66,8 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
     - **Admin Panel**: Desktop application for managing user data and system administration
 
     Both are available in our GitHub repository:
-    [UPay Project Repository](https://github.com/RanujaLiyanaarachchi/Final_Project.git)
-    
+[UPay Project Repository](https://github.com/RanujaLiyanaarachchi/Final_Project.git)
+
 ## Project Structure
 
 - **lib/**
