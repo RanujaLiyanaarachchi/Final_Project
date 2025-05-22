@@ -11,37 +11,33 @@ class WelcomeScreen extends StatefulWidget {
   State<WelcomeScreen> createState() => _WelcomeScreenState();
 }
 
-class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProviderStateMixin {
-  // Define constant colors to avoid recreating them
+class _WelcomeScreenState extends State<WelcomeScreen>
+    with SingleTickerProviderStateMixin {
   static const circleColor = Color.fromRGBO(59, 130, 246, 0.07);
   static const headingColor = Color(0xFF1E293B);
   static const textColor = Color(0xFF64748B);
   static const backgroundColor = Color(0xFFFEFEFF);
   static const backgroundEndColor = Color(0xFFEFF6FF);
 
-  // Animation controller for smooth entry
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
 
   @override
   void initState() {
     super.initState();
-    
-    // Initialize animation controller
+
     _animationController = AnimationController(
       duration: const Duration(milliseconds: 300),
       vsync: this,
     );
-    
+
     _fadeAnimation = CurvedAnimation(
       parent: _animationController,
       curve: Curves.easeIn,
     );
 
-    // Pre-load image
     _precacheImages();
-    
-    // Start animation after frame is rendered
+
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _animationController.forward();
     });
@@ -49,8 +45,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
   Future<void> _precacheImages() async {
     await precacheImage(
-      const AssetImage('assets/images/welcome/welcome_image.png'), 
-      context
+      const AssetImage('assets/images/welcome/welcome_image.png'),
+      context,
     );
   }
 
@@ -64,8 +60,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
     final dpr = MediaQuery.of(context).devicePixelRatio;
-    
-    // Calculate image cache width once
+
     final imageCacheWidth = (size.width * 0.9 * dpr).toInt();
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -78,7 +73,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
         body: Container(
           width: double.infinity,
           height: double.infinity,
-          // Using const decoration to avoid recreation during rebuild
           decoration: const BoxDecoration(
             gradient: LinearGradient(
               begin: Alignment.topCenter,
@@ -91,7 +85,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
             child: SafeArea(
               child: Stack(
                 children: [
-                  // Decorative elements - using const where possible
                   Positioned(
                     top: -size.width * 0.24,
                     right: -size.width * 0.24,
@@ -117,7 +110,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
                     ),
                   ),
 
-                  // Main content
                   _buildMainContent(context, size, imageCacheWidth),
                 ],
               ),
@@ -128,10 +120,13 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
     );
   }
 
-  // Extract method to reduce build method complexity
-  Widget _buildMainContent(BuildContext context, Size size, int imageCacheWidth) {
+  Widget _buildMainContent(
+    BuildContext context,
+    Size size,
+    int imageCacheWidth,
+  ) {
     final l10n = AppLocalizations.of(context)!;
-    
+
     return SingleChildScrollView(
       physics: const ClampingScrollPhysics(),
       child: Padding(
@@ -144,7 +139,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
           children: [
             SizedBox(height: size.height * 0.08),
 
-            // Greeting text
             Padding(
               padding: EdgeInsets.only(left: size.width * 0.03),
               child: Text(
@@ -160,7 +154,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
             SizedBox(height: size.height * 0.04),
 
-            // Main illustration - optimized
             Center(
               child: Image.asset(
                 'assets/images/welcome/welcome_image.png',
@@ -173,7 +166,6 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
             SizedBox(height: size.height * 0.04),
 
-            // App name and description
             Center(
               child: Column(
                 children: [
@@ -208,11 +200,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> with SingleTickerProvider
 
             SizedBox(height: size.height * 0.07),
 
-            // Button
             Padding(
-              padding: EdgeInsets.symmetric(
-                horizontal: size.width * 0.06,
-              ),
+              padding: EdgeInsets.symmetric(horizontal: size.width * 0.06),
               child: const OptimizedWelcomeButton(),
             ),
 
@@ -235,20 +224,19 @@ class _OptimizedWelcomeButtonState extends State<OptimizedWelcomeButton> {
   bool _isPressed = false;
   bool _isNavigating = false;
 
-  // Pre-calculate colors for better performance
   static final buttonStartColor = Colors.blue.shade300;
   static final buttonEndColor = Colors.blue.shade500;
   static final buttonPressedStartColor = Colors.blue.shade800;
   static final buttonPressedEndColor = Colors.blue.shade900;
-  
-  static final normalShadowColor = buttonStartColor.withAlpha(51); // 0.2 * 255
-  static final pressedShadowColor = buttonPressedEndColor.withAlpha(102); // 0.4 * 255
 
-  // Method to handle navigation with debounce
+  static final normalShadowColor = buttonStartColor.withAlpha(51); // 0.2 * 255
+  static final pressedShadowColor = buttonPressedEndColor.withAlpha(
+    102,
+  ); // 0.4 * 255
+
   Future<void> _handleNavigation() async {
-    // Prevent multiple taps
     if (_isNavigating) return;
-    
+
     setState(() {
       _isNavigating = true;
     });
@@ -256,15 +244,15 @@ class _OptimizedWelcomeButtonState extends State<OptimizedWelcomeButton> {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('isWelcomeScreenSeen', true);
-      
+
       if (!mounted) return;
-      
-      // Use a simpler transition for better performance
+
       Navigator.pushReplacement(
         context,
         PageRouteBuilder(
           transitionDuration: const Duration(milliseconds: 300),
-          pageBuilder: (context, animation, secondaryAnimation) => const SignInScreen(),
+          pageBuilder:
+              (context, animation, secondaryAnimation) => const SignInScreen(),
           transitionsBuilder: (context, animation, secondaryAnimation, child) {
             return FadeTransition(opacity: animation, child: child);
           },
@@ -281,14 +269,14 @@ class _OptimizedWelcomeButtonState extends State<OptimizedWelcomeButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate gradients based on state
-    final gradientColors = _isPressed
-        ? [buttonPressedStartColor, buttonPressedEndColor] 
-        : [buttonStartColor, buttonEndColor];
-        
+    final gradientColors =
+        _isPressed
+            ? [buttonPressedStartColor, buttonPressedEndColor]
+            : [buttonStartColor, buttonEndColor];
+
     final shadowColor = _isPressed ? pressedShadowColor : normalShadowColor;
     final offset = _isPressed ? const Offset(0, 3) : const Offset(0, 5);
-    
+
     return GestureDetector(
       onTapDown: (_) => setState(() => _isPressed = true),
       onTapUp: (_) => setState(() => _isPressed = false),
