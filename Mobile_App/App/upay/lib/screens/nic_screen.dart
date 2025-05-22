@@ -18,12 +18,10 @@ class NicScreen extends StatefulWidget {
 }
 
 class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
-  // Controllers
   final TextEditingController _nicController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final FocusNode _nicFocusNode = FocusNode();
 
-  // State flags - using bool instead of multiple enums for memory efficiency
   bool _isNicValid = false;
   bool _isLoading = false;
   bool _isPressed = false;
@@ -31,10 +29,8 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
   bool _isKeyboardVisible = false;
   bool _isBackPressed = false;
 
-  // For error display
   String? _errorText;
 
-  // Regular expressions compiled once for reuse
   static final RegExp _nicType1Regex = RegExp(r'^\d{12}$');
   static final RegExp _nicType2Regex = RegExp(r'^\d{9}[vV]$');
 
@@ -44,22 +40,17 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
     WidgetsBinding.instance.addObserver(this);
     _nicFocusNode.addListener(_handleFocusChange);
 
-    // Mark that we're on NIC screen at startup
     _markNicScreenActive();
   }
 
-  // Mark that NIC screen is active
   Future<void> _markNicScreenActive() async {
     try {
       final prefs = await SharedPreferences.getInstance();
 
-      // Store current navigation state
       await prefs.setBool('on_nic_screen', true);
 
-      // Ensure user is not logged in when on NIC screen
       await SecureStorageService.saveUserLoggedIn(false);
 
-      // Clear any previously auto-filled NIC
       await prefs.remove('auto_fill_nic');
     } catch (e) {
       debugPrint("Error marking NIC screen active: $e");
@@ -77,13 +68,11 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Only update state if necessary
     if (state == AppLifecycleState.resumed && _isLoading) {
       setState(() => _isLoading = false);
     }
   }
 
-  // Optimized NIC validation - avoid redundant regex checks
   bool _validateNicFormat(String nic) {
     final int length = nic.length;
     if (length == 12) {
@@ -94,7 +83,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
     return false;
   }
 
-  // Check internet connection
   Future<bool> _checkInternetConnection() async {
     try {
       var connectivityResult = await Connectivity().checkConnectivity();
@@ -108,7 +96,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _validateNic({bool autoVerify = false}) async {
-    // Never allow auto-verification
     if (autoVerify) return;
 
     FocusScope.of(context).unfocus();
@@ -118,7 +105,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
 
     final String nic = _nicController.text.trim();
 
-    // Don't continue if NIC is empty
     if (nic.isEmpty) {
       setState(() {
         _errorText =
@@ -127,7 +113,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
       return;
     }
 
-    // Check NIC format
     if (!_validateNicFormat(nic)) {
       setState(() {
         _errorText =
@@ -139,7 +124,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
 
     if (!_formKey.currentState!.validate()) return;
 
-    // Check internet connection first
     bool hasInternet = await _checkInternetConnection();
     if (!hasInternet) {
       if (!mounted) return;
@@ -157,20 +141,16 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
     });
 
     try {
-      // Use one Firestore instance to reduce connection overhead
       final firestore = FirebaseFirestore.instance;
 
-      // Check if NIC exists in customers collection
       final QuerySnapshot result =
           await firestore
               .collection('customers')
               .where('nic', isEqualTo: nic)
               .get();
 
-      // Try alternative NIC format if not found
       bool isNicValid = result.docs.isNotEmpty;
 
-      // Only try alternative formats if needed
       if (!isNicValid && nic.length == 10) {
         final String lastChar = nic[9];
         if (lastChar == 'v' || lastChar == 'V') {
@@ -187,13 +167,8 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
         }
       }
 
-      // Case-insensitive search as last resort
       if (!isNicValid) {
-        final allDocs =
-            await firestore
-                .collection('customers')
-                .limit(50) // Limit query for better performance
-                .get();
+        final allDocs = await firestore.collection('customers').limit(50).get();
 
         final nicLower = nic.toLowerCase();
         for (final doc in allDocs.docs) {
@@ -219,22 +194,17 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
               'Incorrect NIC number. Try again';
         });
 
-        // Clear any saved validation state since NIC is invalid
         await _clearNicValidationState();
       } else {
-        // IMPORTANT: Clear the NIC screen flag ONLY for valid NIC
         final prefs = await SharedPreferences.getInstance();
         await prefs.remove('on_nic_screen');
 
-        // Save user login information - only for valid NICs
         await AuthService.saveUserLogin(nic: nic, phone: widget.phoneNumber);
 
-        // Store in secure storage for better security
         await SecureStorageService.saveUserNic(nic);
         await SecureStorageService.saveUserPhone(widget.phoneNumber);
         await SecureStorageService.saveUserLoggedIn(true);
 
-        // Link the phone number with this NIC in the database
         await _updateUserData(nic);
 
         if (mounted) {
@@ -254,25 +224,20 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
               'Connection error. Try again';
         });
 
-        // Clear any saved validation state on error
         await _clearNicValidationState();
       }
     }
   }
 
-  // Clear all NIC validation state when validation fails
   Future<void> _clearNicValidationState() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('nic_verified');
 
-      // Keep on_nic_screen flag to ensure we come back here
       await prefs.setBool('on_nic_screen', true);
 
-      // Remove auto-fill NIC to prevent incorrect NIC from being displayed again
       await prefs.remove('auto_fill_nic');
 
-      // Also clear from secure storage
       await SecureStorageService.saveUserLoggedIn(false);
     } catch (e) {
       debugPrint("Error clearing NIC validation state: $e");
@@ -281,7 +246,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
 
   Future<void> _updateUserData(String nic) async {
     try {
-      // Find the customer document by NIC
       final customerQuery =
           await FirebaseFirestore.instance
               .collection('customers')
@@ -289,13 +253,10 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
               .get();
 
       if (customerQuery.docs.isNotEmpty) {
-        // Get the document ID
         final String customerId = customerQuery.docs.first.id;
 
-        // Save the customer ID
         await SecureStorageService.saveUserCustomerId(customerId);
 
-        // Update the document with the new phone number
         await FirebaseFirestore.instance
             .collection('customers')
             .doc(customerId)
@@ -306,17 +267,14 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                       : widget.phoneNumber,
             });
 
-        // Only save the last verified NIC - not for auto-fill but for tracking
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('last_verified_nic', nic);
         await prefs.setString('last_phone', widget.phoneNumber);
 
-        // Add validation flag ONLY for successfully validated NICs
         await prefs.setBool('nic_verified', true);
       }
     } catch (e) {
       debugPrint("Error updating user data: $e");
-      // Continue with navigation even if update fails
     }
   }
 
@@ -331,23 +289,19 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate dimensions once for reuse
     final size = MediaQuery.of(context).size;
     final horizontalPadding = size.width < 600 ? 40.0 : 50.0;
     final imageHeight = size.width < 600 ? 300.0 : 280.0;
 
-    // Check if keyboard is visible
     final viewInsets = MediaQuery.of(context).viewInsets;
     _isKeyboardVisible = viewInsets.bottom > 0;
 
-    // Prepare colors - reused from sign in page
     final borderColor = Colors.blue.shade100;
     final buttonStartColor = Colors.blue.shade300;
     final buttonEndColor = Colors.blue.shade500;
     final buttonPressedStartColor = Colors.blue.shade800;
     final buttonPressedEndColor = Colors.blue.shade900;
 
-    // Circle bubble color (same as sign in page)
     const circleColor = Color.fromRGBO(59, 130, 246, 0.07);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -357,7 +311,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFFEFEFF),
-        // This preserves the bottom bubble position when keyboard opens
         resizeToAvoidBottomInset: false,
         body: Container(
           width: double.infinity,
@@ -372,7 +325,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
           child: SafeArea(
             child: Stack(
               children: [
-                // Decorative circle bubbles (same as sign in page)
                 Positioned(
                   top: -size.width * 0.24,
                   right: -size.width * 0.24,
@@ -398,12 +350,10 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                   ),
                 ),
 
-                // Main content
                 Form(
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Custom header with back button
                       Padding(
                         padding: EdgeInsets.only(
                           top: 60.0,
@@ -413,7 +363,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
-                            // Centered title
                             Align(
                               alignment: Alignment.center,
                               child: Text(
@@ -429,7 +378,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                                 ),
                               ),
                             ),
-                            // Back button aligned to the left with custom animation
                             Positioned(
                               left: -10,
                               child: GestureDetector(
@@ -475,10 +423,8 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Space between heading and content
                               SizedBox(height: _isKeyboardVisible ? 100 : 65),
 
-                              // Only show image when keyboard is not visible
                               if (!_isKeyboardVisible) ...[
                                 Image.asset(
                                   'assets/images/nic/nic.png',
@@ -500,7 +446,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                                 const SizedBox(height: 24),
                               ],
 
-                              // Added heading text (visible regardless of keyboard state)
                               Text(
                                 AppLocalizations.of(
                                       context,
@@ -514,7 +459,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                               ),
                               const SizedBox(height: 10),
 
-                              // Added description text (visible regardless of keyboard state)
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 20,
@@ -534,7 +478,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                               ),
                               const SizedBox(height: 28),
 
-                              // NIC Field - Matching sign in screen design
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
@@ -610,7 +553,6 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
 
                               const SizedBox(height: 30),
 
-                              // Verify Button - styled like the sign in button
                               GestureDetector(
                                 onTapDown:
                                     (_) => setState(() => _isPressed = true),
@@ -706,14 +648,12 @@ class _NicScreenState extends State<NicScreen> with WidgetsBindingObserver {
                                 ),
                               ),
 
-                              // Bottom padding depending on keyboard visibility
                               SizedBox(height: _isKeyboardVisible ? 10 : 20),
                             ],
                           ),
                         ),
                       ),
 
-                      // Error messages - only show when keyboard is hidden and there's an error
                       if (_submitted &&
                           !_isKeyboardVisible &&
                           _errorText != null)
