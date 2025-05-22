@@ -229,10 +229,8 @@ class _OptimizedWelcomeButtonState extends State<OptimizedWelcomeButton> {
   static final buttonPressedStartColor = Colors.blue.shade800;
   static final buttonPressedEndColor = Colors.blue.shade900;
 
-  static final normalShadowColor = buttonStartColor.withAlpha(51); // 0.2 * 255
-  static final pressedShadowColor = buttonPressedEndColor.withAlpha(
-    102,
-  ); // 0.4 * 255
+  static final normalShadowColor = buttonStartColor.withAlpha(51);
+  static final pressedShadowColor = buttonPressedEndColor.withAlpha(102);
 
   Future<void> _handleNavigation() async {
     if (_isNavigating) return;
