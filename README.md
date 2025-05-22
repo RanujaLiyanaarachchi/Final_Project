@@ -52,7 +52,7 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
 
 2. Admin Panel Access: To manage user data, access the desktop admin panel application here:
 
-    <https://github.com/RanujaLiyanaarachchi/Final_Project/tree/cd5907b1fb2733638173315f792e590eb5d61ede/Desktop_App>
+    [Admin Panel (flutter Desktop App)](https://github.com/RanujaLiyanaarachchi/Final_Project/tree/cd5907b1fb2733638173315f792e590eb5d61ede/Desktop_App)
 
 3. Adding Your Data: To use the app with your real information, access the admin panel from our GitHub repository, set up your personal and financial details, and then sign in using your actual NIC number to view your real data.
 
@@ -60,10 +60,10 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
 
 ## Source Code Access
 
-    Access the complete source code for both applications:
+Access the complete source code for both applications:
 
-    - **Mobile Application**: The main UPay mobile application built with Flutter
-    - **Admin Panel**: Desktop application for managing user data and system administration
+- Mobile Application: The main UPay mobile application built with Flutter
+- Admin Panel: Desktop application for managing user data and system administration
 
 Both are available in our GitHub repository: [UPay Project Repository](https://github.com/RanujaLiyanaarachchi/Final_Project.git)
 
