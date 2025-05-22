@@ -129,7 +129,7 @@ class _SupportScreenState extends State<SupportScreen> with AutomaticKeepAliveCl
       return '94${cleanPhone.substring(1)}';
     }
     
-    // Otherwise just add 94 prefix
+    // Otherwise just add +94 prefix
     return '94$cleanPhone';
   }
 
@@ -315,7 +315,7 @@ class _SupportScreenState extends State<SupportScreen> with AutomaticKeepAliveCl
                             width: 40,
                             height: 40,
                             // Use memory efficient loading
-                            cacheWidth: 80, // 2x for high-res displays
+                            cacheWidth: 80, 
                           ),
                           const SizedBox(width: 12),
                           // Company details
