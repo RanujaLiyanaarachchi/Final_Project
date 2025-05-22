@@ -149,7 +149,7 @@ class _SignInScreenState extends State<SignInScreen>
           connectivityResult.contains(ConnectivityResult.ethernet);
     } catch (e) {
       // If there's an error checking connectivity, assume no connection
-      debugPrint("📶Error checking connectivity: $e");
+      debugPrint("Error checking connectivity: $e");
       return false;
     }
   }
@@ -298,7 +298,6 @@ class _SignInScreenState extends State<SignInScreen>
         codeAutoRetrievalTimeout: (String verificationId) {
           if (!mounted) return;
 
-          // This is just the auto-retrieval timeout, not our request timeout
           // We will only respond if we're still loading
           if (_isLoading) {
             _cancelAuthTimeout();
@@ -432,7 +431,7 @@ class _SignInScreenState extends State<SignInScreen>
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
                               // Space between heading and content
-                              // Exactly 120 pixels when keyboard is visible
+
                               SizedBox(height: _isKeyboardVisible ? 120 : 65),
 
                               // Only show image when keyboard is not visible
@@ -571,7 +570,7 @@ class _SignInScreenState extends State<SignInScreen>
 
                               const SizedBox(height: 30),
 
-                              // Sign In Button - Like welcome screen flow
+                              // Sign In Button
                               GestureDetector(
                                 onTapDown:
                                     (_) => setState(() => _isPressed = true),
