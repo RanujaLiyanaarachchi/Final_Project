@@ -1032,6 +1032,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                   
                   // Footer
                   pw.Container(
+                    width: double.infinity,
                     padding: const pw.EdgeInsets.all(15),
                     decoration: pw.BoxDecoration(
                       border: pw.Border.all(color: PdfColors.grey300),

@@ -25,23 +25,28 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
 
+// Global notification plugin
 final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 
+// Background message handler - MUST BE TOP-LEVEL FUNCTION
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  // Initialize Firebase first
   await Firebase.initializeApp();
-  debugPrint("Background message handler initialized");
+  debugPrint("📲 Background message handler initialized");
 
+  // Extract message data
   final notification = message.notification;
   final data = message.data;
   final String? messageId = message.messageId ?? data['messageId'];
 
   if (messageId == null) {
-    debugPrint("Message has no ID, cannot process");
+    debugPrint("❌ Message has no ID, cannot process");
     return;
   }
 
+  // Create notification channel (required for Android)
   if (Platform.isAndroid) {
     const AndroidNotificationChannel channel = AndroidNotificationChannel(
       'high_importance_channel',
@@ -59,7 +64,10 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
         ?.createNotificationChannel(channel);
   }
 
-  const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+  // Initialize notifications plugin
+  const androidSettings = AndroidInitializationSettings(
+    '@mipmap/ic_launcher',
+  );
   const iosSettings = DarwinInitializationSettings(
     requestAlertPermission: true,
     requestBadgePermission: true,
@@ -71,6 +79,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   );
   await flutterLocalNotificationsPlugin.initialize(initSettings);
 
+  // Format notification content
   String title, body;
   if (notification != null) {
     title = notification.title ?? 'New Message';
@@ -80,12 +89,14 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     body = data['body'] ?? data['message'] ?? '';
   }
 
+  // Check for attachments
   if (data['url'] != null && data['url'].toString().isNotEmpty) {
     title = 'title';
   } else if (data['attachments'] != null) {
     title = 'title';
   }
 
+  // Create notification details
   const NotificationDetails platformDetails = NotificationDetails(
     android: AndroidNotificationDetails(
       'high_importance_channel',
@@ -106,6 +117,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     ),
   );
 
+  // Show notification
   await flutterLocalNotificationsPlugin.show(
     messageId.hashCode,
     title,
@@ -117,6 +129,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
     }),
   );
 
+  // Mark as delivered if possible
   try {
     await Firebase.initializeApp();
     await FirebaseFirestore.instance
@@ -127,15 +140,17 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
           'deliveredAt': FieldValue.serverTimestamp(),
           'deliveryMethod': 'background_handler',
         });
-    debugPrint("Marked message as delivered from background handler");
+    debugPrint("✅ Marked message as delivered from background handler");
   } catch (e) {
-    debugPrint("Error marking message as delivered: $e");
+    debugPrint("❌ Error marking message as delivered: $e");
   }
 }
 
 void main() async {
+  // Ensure Flutter bindings are initialized
   WidgetsFlutterBinding.ensureInitialized();
 
+  // Load saved language and welcome screen flag - we'll need this whether Firebase initializes or not
   SharedPreferences prefs;
   bool isLanguageSelected;
   bool isWelcomeScreenSeen;
@@ -144,21 +159,26 @@ void main() async {
   bool autoSignOutEnabled = false;
 
   try {
+    // Check for auto sign out setting
     prefs = await SharedPreferences.getInstance();
     autoSignOutEnabled = prefs.getBool('auto_sign_out_enabled') ?? false;
 
+    // If auto sign out is enabled, clear login state
     if (autoSignOutEnabled) {
-      debugPrint("Auto sign out enabled, signing out user");
+      debugPrint("🔐 Auto sign out enabled, signing out user");
       await SecureStorageService.clearUserData();
       await prefs.setBool('isLoggedIn', false);
     }
 
+    // 1. Initialize Firebase first
     await Firebase.initializeApp();
-    debugPrint("Firebase initialized successfully");
+    debugPrint("✅ Firebase initialized successfully");
 
+    // 2. Register background handler IMMEDIATELY after Firebase init
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    debugPrint("Background message handler registered");
+    debugPrint("✅ Background message handler registered");
 
+    // 3. Set up notification channel for Android
     if (Platform.isAndroid) {
       const AndroidNotificationChannel channel = AndroidNotificationChannel(
         'high_importance_channel',
@@ -174,15 +194,19 @@ void main() async {
             AndroidFlutterLocalNotificationsPlugin
           >()
           ?.createNotificationChannel(channel);
-      debugPrint("Android notification channel created");
+      debugPrint("✅ Android notification channel created");
     }
 
+    // Initialize the payment messages service
     await PaymentMessagesInitializer.initialize();
-    debugPrint("Payment messages service initialized");
+    debugPrint("✅ Payment messages service initialized");
 
+    // After Firebase initialization and before runApp()
+    // Initialize the payment reminder service
     await PaymentReminderInitializer.initialize();
-    debugPrint("Payment reminder service initialized");
+    debugPrint("✅ Payment reminder service initialized");
 
+    // 4. Initialize local notifications
     const androidSettings = AndroidInitializationSettings(
       '@mipmap/ic_launcher',
     );
@@ -196,46 +220,68 @@ void main() async {
       iOS: iosSettings,
     );
 
+    // Handle notification taps
     await flutterLocalNotificationsPlugin.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (response) {
         _handleNotificationTap(response.payload);
       },
     );
-    debugPrint("Local notifications initialized");
+    debugPrint("✅ Local notifications initialized");
 
+    // 5. Initialize SecureStorage - do this early
     await SecureStorageService.initialize();
-    debugPrint("Secure storage initialized successfully");
+    debugPrint("✅ Secure storage initialized successfully");
 
+    // 6. Initialize notification service
     await NotificationService.initialize();
-    debugPrint("Notification service initialized");
+    debugPrint("✅ Notification service initialized");
 
+    // 7. Initialize background service
     await BackgroundService().initialize();
-    debugPrint("Background service initialized");
+    debugPrint("✅ Background service initialized");
 
+    // 8. Check if user is logged in (after potentially clearing with auto sign out)
     isLoggedIn = await SecureStorageService.isUserLoggedIn();
-    debugPrint("User logged in: $isLoggedIn");
+    debugPrint("👤 User logged in: $isLoggedIn");
 
+    // If auto sign out was enabled, also sign out from Firebase
     if (autoSignOutEnabled && Firebase.apps.isNotEmpty) {
       try {
         await FirebaseAuth.instance.signOut();
         debugPrint(
-          "Successfully signed out Firebase user due to auto sign out setting",
+          "✅ Successfully signed out Firebase user due to auto sign out setting",
         );
       } catch (e) {
-        debugPrint("Error signing out Firebase user: $e");
+        debugPrint("❌ Error signing out Firebase user: $e");
       }
     }
 
+    // 9. If user is logged in, update FCM token and set up notification listeners
     if (isLoggedIn) {
+      // Update FCM token in database
       await _updateFcmToken();
 
+      // in main.dart after Firebase.initializeApp()
       await initializeGlobalNotifications();
 
+      // Initialize the payment messages service
+
+      // Dispose when your app is closing
+
+      // Inside your main() function after Firebase initialization
+
+      // When the app is closing
+
+      // And before your app closes
+
+      // Set up foreground message handler
       FirebaseMessaging.onMessage.listen(_handleForegroundMessage);
 
+      // Set up message opened handler
       FirebaseMessaging.onMessageOpenedApp.listen(_handleMessageOpenedApp);
 
+      // Check for initial message (app opened from terminated state)
       RemoteMessage? initialMessage =
           await FirebaseMessaging.instance.getInitialMessage();
       if (initialMessage != null) {
@@ -243,9 +289,11 @@ void main() async {
       }
     }
   } catch (e) {
-    debugPrint("Firebase initialization error: $e");
+    debugPrint("❌ Firebase initialization error: $e");
+    // Continue without Firebase for UI testing
   }
 
+  // Set initial status bar color and icon brightness
   SystemChrome.setSystemUIOverlayStyle(
     const SystemUiOverlayStyle(
       statusBarColor: Color(0xFFFEF7FF),
@@ -253,19 +301,21 @@ void main() async {
     ),
   );
 
+  // Load user preferences
   try {
     prefs = await SharedPreferences.getInstance();
     isLanguageSelected = prefs.getBool('isLanguageSelected') ?? false;
     isWelcomeScreenSeen = prefs.getBool('isWelcomeScreenSeen') ?? false;
     savedLanguage = prefs.getString('language') ?? 'en';
   } catch (e) {
-    debugPrint("Error loading shared preferences: $e");
-
+    debugPrint("❌ Error loading shared preferences: $e");
+    // Fallback values
     isLanguageSelected = false;
     isWelcomeScreenSeen = false;
     savedLanguage = 'en';
   }
 
+  // Launch the app
   runApp(
     ChangeNotifierProvider(
       create: (context) => LanguageProvider(Locale(savedLanguage)),
@@ -279,24 +329,30 @@ void main() async {
   );
 }
 
+// Update FCM token
 Future<void> _updateFcmToken() async {
   try {
+    // Get FCM token
     final token = await FirebaseMessaging.instance.getToken();
     if (token == null) return;
 
+    // Save token locally
     await SecureStorageService.saveFcmToken(token);
 
+    // Get user info
     final nic = await SecureStorageService.getUserNic();
     final customerId = await SecureStorageService.getUserCustomerId();
     final phoneNumber = await SecureStorageService.getUserPhone();
 
     if (nic == null || nic.isEmpty) {
-      debugPrint("Cannot update FCM token: No NIC available");
+      debugPrint("❌ Cannot update FCM token: No NIC available");
       return;
     }
 
+    // Create sanitized version of NIC for document ID
     final String safeNic = nic.replaceAll('/', '_').replaceAll('.', '_');
 
+    // Update Identity collection
     await FirebaseFirestore.instance.collection('identity').doc(safeNic).set({
       'nic': nic,
       'customerId': customerId,
@@ -307,30 +363,36 @@ Future<void> _updateFcmToken() async {
       'active': true,
     }, SetOptions(merge: true));
 
-    debugPrint("Updated FCM token in Identity collection");
+    debugPrint("✅ Updated FCM token in Identity collection");
 
+    // Subscribe to topics
     await FirebaseMessaging.instance.subscribeToTopic('all_users');
 
+    // Subscribe to user-specific topic
     await FirebaseMessaging.instance.subscribeToTopic('user_$safeNic');
 
+    // Subscribe to customer-specific topic if available
     if (customerId != null && customerId.isNotEmpty) {
       await FirebaseMessaging.instance.subscribeToTopic('customer_$customerId');
     }
   } catch (e) {
-    debugPrint("Error updating FCM token: $e");
+    debugPrint("❌ Error updating FCM token: $e");
   }
 }
 
+// Handle foreground messages
 void _handleForegroundMessage(RemoteMessage message) {
   try {
-    debugPrint("Received foreground message: ${message.messageId}");
+    debugPrint("📲 Received foreground message: ${message.messageId}");
 
+    // Extract message data
     final notification = message.notification;
     final data = message.data;
     final String? messageId = message.messageId ?? data['messageId'];
 
     if (messageId == null) return;
 
+    // Format notification content
     String title, body;
     if (notification != null) {
       title = notification.title ?? 'New Message';
@@ -340,12 +402,14 @@ void _handleForegroundMessage(RemoteMessage message) {
       body = data['body'] ?? data['message'] ?? '';
     }
 
+    // Check for attachments
     if (data['url'] != null && data['url'].toString().isNotEmpty) {
       title = 'title';
     } else if (data['attachments'] != null) {
       title = 'title';
     }
 
+    // Show notification
     NotificationService.showLocalNotification(
       title: title,
       body: body,
@@ -356,16 +420,18 @@ void _handleForegroundMessage(RemoteMessage message) {
       id: messageId.hashCode,
     );
 
+    // Mark as delivered
     FirebaseFirestore.instance.collection('messages').doc(messageId).update({
       'delivered': true,
       'deliveredAt': FieldValue.serverTimestamp(),
       'deliveryMethod': 'foreground',
     });
   } catch (e) {
-    debugPrint("Error handling foreground message: $e");
+    debugPrint("❌ Error handling foreground message: $e");
   }
 }
 
+// Handle notification taps
 void _handleNotificationTap(String? payload) {
   try {
     if (payload == null) return;
@@ -374,40 +440,45 @@ void _handleNotificationTap(String? payload) {
     final String? messageId = data['messageId'];
 
     if (messageId != null) {
-      debugPrint("Notification tapped: $messageId");
+      debugPrint("📱 Notification tapped: $messageId");
 
+      // Store for navigation
       SecureStorageService.saveLastTappedMessageId(messageId);
     }
   } catch (e) {
-    debugPrint("Error handling notification tap: $e");
+    debugPrint("❌ Error handling notification tap: $e");
   }
 }
 
+// Handle when app is opened from a notification while in background
 void _handleMessageOpenedApp(RemoteMessage message) {
   try {
-    debugPrint("App opened from notification in background");
+    debugPrint("📱 App opened from notification in background");
 
     final String? messageId = message.messageId ?? message.data['messageId'];
 
     if (messageId != null) {
+      // Store for navigation after app is fully loaded
       SecureStorageService.saveLastTappedMessageId(messageId);
     }
   } catch (e) {
-    debugPrint("Error handling message opened app: $e");
+    debugPrint("❌ Error handling message opened app: $e");
   }
 }
 
+// Handle when app is opened from a notification in terminated state
 void _handleInitialMessage(RemoteMessage message) {
   try {
-    debugPrint("App opened from notification in terminated state");
+    debugPrint("📱 App opened from notification in terminated state");
 
     final String? messageId = message.messageId ?? message.data['messageId'];
 
     if (messageId != null) {
+      // Store for navigation after app is fully loaded
       SecureStorageService.saveLastTappedMessageId(messageId);
     }
   } catch (e) {
-    debugPrint("Error handling initial message: $e");
+    debugPrint("❌ Error handling initial message: $e");
   }
 }
 
@@ -435,6 +506,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
+    // Check for notification navigation after app is built
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _checkForStoredNotification();
     });
@@ -449,10 +521,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      // App came to the foreground - check for notifications
       _checkForStoredNotification();
     }
   }
 
+  // Check if we need to navigate to a notification
   Future<void> _checkForStoredNotification() async {
     if (!widget.isLoggedIn) return;
 
@@ -461,10 +535,12 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
           await SecureStorageService.getLastTappedMessageId();
 
       if (messageId != null && messageId.isNotEmpty) {
-        debugPrint("Found stored notification to navigate to: $messageId");
+        debugPrint("📱 Found stored notification to navigate to: $messageId");
 
+        // Clear it to prevent repeated navigation
         await SecureStorageService.clearLastTappedMessageId();
 
+        // Navigate to notification screen
         Future.delayed(const Duration(milliseconds: 500), () {
           Navigator.of(
             GlobalNavigatorKey.navigatorKey.currentContext!,
@@ -472,7 +548,7 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
         });
       }
     } catch (e) {
-      debugPrint("Error checking for stored notification: $e");
+      debugPrint("❌ Error checking for stored notification: $e");
     }
   }
 
@@ -480,18 +556,24 @@ class _MyAppState extends State<MyApp> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     final provider = Provider.of<LanguageProvider>(context);
 
+    // Determine initial screen
     Widget initialScreen;
 
+    // Force sign-in screen if auto sign out was enabled
     if (widget.autoSignOutEnabled) {
-      debugPrint("Auto sign out was enabled");
+      debugPrint("🔐 Auto sign out was enabled, showing sign in screen");
       initialScreen = const SignInScreen();
     } else if (widget.isLoggedIn) {
+      // User is logged in, go directly to dashboard
       initialScreen = const DashboardScreen();
     } else if (!widget.isLanguageSelected) {
+      // Language not selected, show language selection
       initialScreen = const LanguageSelectionScreen();
     } else if (!widget.isWelcomeScreenSeen) {
+      // Welcome screen not seen, show welcome
       initialScreen = const WelcomeScreen();
     } else {
+      // Default to sign in screen
       initialScreen = const SignInScreen();
     }
 
@@ -541,6 +623,7 @@ class GlobalNavigatorKey {
       GlobalKey<NavigatorState>();
 }
 
+// Placeholder for required class
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
 
