@@ -48,7 +48,7 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
 
 ## Important Testing Information
 
-1.     You can use your real phone number and enter the received OTP during authentication. You can also sign in with your real NIC number after adding your personal data through the admin panel.
+1. You can use your real phone number and enter the received OTP during authentication. You can also sign in with your real NIC number after adding your personal data through the admin panel.
 
 2. Admin Panel Access: To manage user data, access the desktop admin panel application here:
 
@@ -65,8 +65,7 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
     - **Mobile Application**: The main UPay mobile application built with Flutter
     - **Admin Panel**: Desktop application for managing user data and system administration
 
-    Both are available in our GitHub repository:
-[UPay Project Repository](https://github.com/RanujaLiyanaarachchi/Final_Project.git)
+Both are available in our GitHub repository: [UPay Project Repository](https://github.com/RanujaLiyanaarachchi/Final_Project.git)
 
 ## Project Structure
 
