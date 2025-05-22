@@ -27,7 +27,7 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
 1. Clone the repository:
     git clone <https://github.com/RanujaLiyanaarachchi/Final_Project.git>
 
-2. Navigate to the project folder:
+2. Navigate to the project folder: Mobile_App/App/
     cd upay
 
 3. Install dependencies:
