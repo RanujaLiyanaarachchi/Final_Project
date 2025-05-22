@@ -9,7 +9,6 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
-// Add a global notification plugin instance that can be accessed from anywhere
 final FlutterLocalNotificationsPlugin globalNotificationsPlugin =
     FlutterLocalNotificationsPlugin();
 String? globalCustomerId;
@@ -17,15 +16,12 @@ String? lastMessageId;
 bool isListeningToMessages = false;
 StreamSubscription<QuerySnapshot>? globalMessageSubscription;
 
-// Initialize notifications globally
 Future<void> initializeGlobalNotifications() async {
   if (isListeningToMessages) return;
 
-  // Initialize settings for Android
   const AndroidInitializationSettings initializationSettingsAndroid =
       AndroidInitializationSettings('@mipmap/ic_launcher');
 
-  // Initialize settings for iOS
   const DarwinInitializationSettings initializationSettingsIOS =
       DarwinInitializationSettings();
 
@@ -36,25 +32,18 @@ Future<void> initializeGlobalNotifications() async {
 
   await globalNotificationsPlugin.initialize(
     initializationSettings,
-    onDidReceiveNotificationResponse: (NotificationResponse response) {
-      // Handle notification tap - need to navigate to notification screen
-      // This will be handled by the app's navigation
-    },
+    onDidReceiveNotificationResponse: (NotificationResponse response) {},
   );
 
-  // Load global customer ID
   globalCustomerId = await SecureStorageService.getUserCustomerId();
 
-  // Load last message ID
   await loadLastMessageId();
 
-  // Start listening for messages globally
   if (globalCustomerId != null) {
     startGlobalMessageListener();
   }
 }
 
-// Load last message ID from shared preferences
 Future<void> loadLastMessageId() async {
   try {
     final prefs = await SharedPreferences.getInstance();
@@ -65,7 +54,6 @@ Future<void> loadLastMessageId() async {
   }
 }
 
-// Save last message ID to shared preferences
 Future<void> saveLastMessageId(String messageId) async {
   try {
     final prefs = await SharedPreferences.getInstance();
@@ -76,13 +64,11 @@ Future<void> saveLastMessageId(String messageId) async {
   }
 }
 
-// Start global message listener
 void startGlobalMessageListener() {
   if (globalCustomerId == null || isListeningToMessages) return;
 
   isListeningToMessages = true;
 
-  // Listen for messages
   globalMessageSubscription = FirebaseFirestore.instance
       .collection('messages')
       .where('customerId', isEqualTo: globalCustomerId)
@@ -92,7 +78,6 @@ void startGlobalMessageListener() {
         (snapshot) {
           final docs = snapshot.docs;
 
-          // Process messages for notifications
           processNewMessages(docs);
         },
         onError: (error) {
@@ -102,31 +87,25 @@ void startGlobalMessageListener() {
       );
 }
 
-// Process new messages for notifications
 void processNewMessages(List<DocumentSnapshot> docs) {
   if (docs.isEmpty) return;
 
-  // Get the latest message
   final latestMessageId = docs.first.id;
 
-  // If we don't have a last message ID, store this one and exit
   if (lastMessageId == null) {
     saveLastMessageId(latestMessageId);
     return;
   }
 
-  // Check if the latest message is newer than our last known message
   if (latestMessageId != lastMessageId) {
-    // Find all new messages (there might be multiple)
     for (final doc in docs) {
       if (doc.id == lastMessageId) {
-        break; // Stop when we reach the last known message
+        break;
       }
 
       final message = doc.data() as Map<String, dynamic>;
       final bool isRead = message['isRead'] == true;
 
-      // Only show notification for unread messages
       if (!isRead) {
         showGlobalNotification(
           message['heading'] ?? 'New Message',
@@ -136,12 +115,10 @@ void processNewMessages(List<DocumentSnapshot> docs) {
       }
     }
 
-    // Update last message ID
     saveLastMessageId(latestMessageId);
   }
 }
 
-// Show a notification globally
 Future<void> showGlobalNotification(
   String title,
   String body,
@@ -167,11 +144,10 @@ Future<void> showGlobalNotification(
     ),
   );
 
-  // Generate a unique ID for each notification based on the message ID
   final int notificationId = messageId.hashCode;
 
   await globalNotificationsPlugin.show(
-    notificationId, // Use unique notification ID
+    notificationId,
     title,
     body,
     platformChannelSpecifics,
@@ -179,7 +155,6 @@ Future<void> showGlobalNotification(
   );
 }
 
-// Cancel global message subscription
 void cancelGlobalMessageSubscription() {
   globalMessageSubscription?.cancel();
   isListeningToMessages = false;
@@ -201,23 +176,18 @@ class _NotificationScreenState extends State<NotificationScreen>
   bool isClearing = false;
   StreamSubscription<QuerySnapshot>? _subscription;
 
-  // Firebase Storage reference
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
-  // Local notifications plugin
   final FlutterLocalNotificationsPlugin flutterLocalNotificationsPlugin =
       globalNotificationsPlugin;
 
-  // List to track messages being removed with animation
   final List<String> _messagesToRemove = [];
 
-  // Map to store animation controllers for each message
   final Map<String, AnimationController> _animationControllers = {};
 
   @override
   void initState() {
     super.initState();
-    // Initialize global notifications if not already running
     initializeGlobalNotifications();
     _loadUserData();
   }
@@ -234,7 +204,6 @@ class _NotificationScreenState extends State<NotificationScreen>
         return;
       }
 
-      // Update global customer ID
       globalCustomerId = customerId;
 
       _subscribeToMessages();
@@ -249,7 +218,6 @@ class _NotificationScreenState extends State<NotificationScreen>
   void _subscribeToMessages() {
     if (customerId == null) return;
 
-    // Subscribe to real-time updates for this customer's messages
     _subscription = FirebaseFirestore.instance
         .collection('messages')
         .where('customerId', isEqualTo: customerId)
@@ -259,7 +227,6 @@ class _NotificationScreenState extends State<NotificationScreen>
           (snapshot) {
             final docs = snapshot.docs;
 
-            // Create animation controllers for new messages
             for (final doc in docs) {
               if (!_animationControllers.containsKey(doc.id)) {
                 _animationControllers[doc.id] = AnimationController(
@@ -287,7 +254,6 @@ class _NotificationScreenState extends State<NotificationScreen>
   void dispose() {
     _subscription?.cancel();
 
-    // Dispose all animation controllers
     for (final controller in _animationControllers.values) {
       controller.dispose();
     }
@@ -304,7 +270,6 @@ class _NotificationScreenState extends State<NotificationScreen>
         child: Column(
           children: [
             const SizedBox(height: 50),
-            // Custom AppBar with Clear All button
             Stack(
               alignment: Alignment.center,
               children: [
@@ -334,7 +299,6 @@ class _NotificationScreenState extends State<NotificationScreen>
                     ),
                   ),
                 ),
-                // Clear All icon on the right
                 if (messages.isNotEmpty && !isLoading)
                   Align(
                     alignment: Alignment.centerRight,
@@ -361,12 +325,10 @@ class _NotificationScreenState extends State<NotificationScreen>
             ),
             const SizedBox(height: 50),
 
-            // Main content
             Expanded(child: _buildContent()),
           ],
         ),
       ),
-      // Removed FloatingActionButton as requested
     );
   }
 
@@ -404,16 +366,13 @@ class _NotificationScreenState extends State<NotificationScreen>
         message['attachments'] != null &&
         (message['attachments'] as List).isNotEmpty;
 
-    // Check if message is read
     final bool isRead = message['isRead'] == true;
 
-    // Get time ago string for display at the bottom
     String timeAgo = '';
     if (message['createdAt'] != null) {
       try {
         final timestamp = message['createdAt'] as Timestamp;
         final dateTime = timestamp.toDate();
-        // Remove tilde character
         timeAgo = timeago
             .format(dateTime, locale: 'en_short')
             .replaceAll('~', '');
@@ -422,14 +381,12 @@ class _NotificationScreenState extends State<NotificationScreen>
       }
     }
 
-    // Get icon based on message type for left icon - use heading to determine icon
     IconData icon;
     Color iconColor;
     Color iconBgColor;
     String title = message['heading'] ?? 'Message';
     String lowerTitle = title.toLowerCase();
 
-    // Check for specific payment and installment message types
     if (lowerTitle.contains('cash deposit')) {
       icon = Icons.payments;
       iconColor = Colors.green.shade700;
@@ -450,9 +407,8 @@ class _NotificationScreenState extends State<NotificationScreen>
       icon = Icons.check_circle;
       iconColor = Colors.orange;
       iconBgColor = Colors.orange.shade50;
-    }
-    // Original icon selection logic
-    else if (lowerTitle.contains('alert') || lowerTitle.contains('important')) {
+    } else if (lowerTitle.contains('alert') ||
+        lowerTitle.contains('important')) {
       icon = Icons.warning_amber_rounded;
       iconColor = Colors.red;
       iconBgColor = Colors.red.shade100;
@@ -489,11 +445,9 @@ class _NotificationScreenState extends State<NotificationScreen>
       iconBgColor = Colors.blue.shade100;
     }
 
-    // Truncate long heading
     String displayTitle =
         title.length > 22 ? '${title.substring(0, 20)}...' : title;
 
-    // Get or create animation controller for this message
     final animController =
         _animationControllers[messageId] ??
         (_animationControllers[messageId] = AnimationController(
@@ -510,9 +464,7 @@ class _NotificationScreenState extends State<NotificationScreen>
       ),
       child: Dismissible(
         key: Key(messageId),
-        // Allow both left and right swipe to delete
         direction: DismissDirection.horizontal,
-        // Background for right to left swipe (swipe left)
         background: Container(
           alignment: Alignment.centerLeft,
           padding: const EdgeInsets.only(left: 20),
@@ -522,7 +474,6 @@ class _NotificationScreenState extends State<NotificationScreen>
           ),
           child: const Icon(Icons.delete_outline, color: Colors.red),
         ),
-        // Background for left to right swipe (swipe right)
         secondaryBackground: Container(
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.only(right: 20),
@@ -532,11 +483,9 @@ class _NotificationScreenState extends State<NotificationScreen>
           ),
           child: const Icon(Icons.delete_outline, color: Colors.red),
         ),
-        // Add confirmation dialog before deleting
         confirmDismiss: (direction) async {
           return await _confirmDeleteMessage();
         },
-        // If confirmed, delete the message
         onDismissed: (direction) {
           _deleteMessageWithAnimation(messageId, message);
         },
@@ -547,7 +496,6 @@ class _NotificationScreenState extends State<NotificationScreen>
             onTap: () => _showMessageDetails(message, messageId),
             child: Stack(
               children: [
-                // Main notification card
                 Container(
                   height: 96,
                   margin: const EdgeInsets.only(bottom: 16),
@@ -563,12 +511,8 @@ class _NotificationScreenState extends State<NotificationScreen>
                       BoxShadow(
                         color:
                             isRead
-                                ? Colors.black.withAlpha(
-                                  10,
-                                ) // 0.04 opacity = ~10 alpha
-                                : Colors.black.withAlpha(
-                                  20,
-                                ), // 0.08 opacity = ~20 alpha
+                                ? Colors.black.withAlpha(10)
+                                : Colors.black.withAlpha(20),
                         blurRadius: isRead ? 5 : 7,
                         offset: const Offset(0, 2),
                       ),
@@ -580,7 +524,6 @@ class _NotificationScreenState extends State<NotificationScreen>
                       child: Row(
                         crossAxisAlignment: CrossAxisAlignment.stretch,
                         children: [
-                          // Left icon container with bg color matching the message theme
                           Container(
                             width: 96,
                             color: iconBgColor,
@@ -588,13 +531,8 @@ class _NotificationScreenState extends State<NotificationScreen>
                             child: Stack(
                               alignment: Alignment.center,
                               children: [
-                                Icon(
-                                  icon, // Icon based on message heading
-                                  color: iconColor,
-                                  size: 36,
-                                ),
+                                Icon(icon, color: iconColor, size: 36),
 
-                                // Unread message indicator
                                 if (!isRead)
                                   Positioned(
                                     top: 12,
@@ -616,7 +554,6 @@ class _NotificationScreenState extends State<NotificationScreen>
                             ),
                           ),
 
-                          // Message content
                           Expanded(
                             child: Container(
                               padding: const EdgeInsets.fromLTRB(16, 12, 16, 8),
@@ -631,7 +568,6 @@ class _NotificationScreenState extends State<NotificationScreen>
                                 mainAxisAlignment:
                                     MainAxisAlignment.spaceBetween,
                                 children: [
-                                  // Message title
                                   Text(
                                     displayTitle,
                                     style: TextStyle(
@@ -646,7 +582,6 @@ class _NotificationScreenState extends State<NotificationScreen>
                                     overflow: TextOverflow.ellipsis,
                                   ),
 
-                                  // Message body preview
                                   Text(
                                     _getMessagePreview(message['message']),
                                     maxLines: 1,
@@ -664,7 +599,6 @@ class _NotificationScreenState extends State<NotificationScreen>
                                     ),
                                   ),
 
-                                  // Time ago at the bottom right
                                   Align(
                                     alignment: Alignment.bottomRight,
                                     child: Text(
@@ -685,7 +619,6 @@ class _NotificationScreenState extends State<NotificationScreen>
                   ),
                 ),
 
-                // Attachment icon at top right corner
                 if (hasAttachments)
                   Positioned(
                     top: 8,
@@ -724,7 +657,6 @@ class _NotificationScreenState extends State<NotificationScreen>
     Map<String, dynamic> message,
     String messageId,
   ) async {
-    // Mark as read in Firestore if not already read
     if (message['isRead'] != true) {
       await FirebaseFirestore.instance
           .collection('messages')
@@ -734,7 +666,6 @@ class _NotificationScreenState extends State<NotificationScreen>
 
     if (!mounted) return;
 
-    // Navigate to the message view screen instead of showing a dialog
     Navigator.of(context).push(
       MaterialPageRoute(
         builder:
@@ -747,7 +678,6 @@ class _NotificationScreenState extends State<NotificationScreen>
     );
   }
 
-  // Show confirmation dialog before deleting a message
   Future<bool> _confirmDeleteMessage() async {
     return await showDialog(
           context: context,
@@ -776,10 +706,9 @@ class _NotificationScreenState extends State<NotificationScreen>
             );
           },
         ) ??
-        false; // Return false if dialog is dismissed
+        false;
   }
 
-  // Confirm and delete a message with its attachments
   Future<void> _confirmAndDeleteMessage(
     String messageId,
     Map<String, dynamic> message,
@@ -787,26 +716,21 @@ class _NotificationScreenState extends State<NotificationScreen>
     if (await _confirmDeleteMessage()) {
       _deleteMessageWithAnimation(messageId, message);
       if (mounted) {
-        Navigator.of(context).pop(); // Close the message detail dialog
+        Navigator.of(context).pop();
       }
     }
   }
 
-  // Delete attachments from Firebase Storage
   Future<void> _deleteAttachments(Map<String, dynamic> message) async {
     try {
-      // Check if message has attachments array
       if (message['attachments'] != null && message['attachments'] is List) {
         List<dynamic> attachments = message['attachments'];
 
         for (var attachment in attachments) {
-          // Check if attachment has storage path
           if (attachment is Map && attachment.containsKey('storagePath')) {
             String storagePath = attachment['storagePath'];
             await _deleteAttachmentByPath(storagePath);
-          }
-          // Alternative: check for path field
-          else if (attachment is Map && attachment.containsKey('path')) {
+          } else if (attachment is Map && attachment.containsKey('path')) {
             String path = attachment['path'];
             await _deleteAttachmentByPath(path);
           }
@@ -817,17 +741,14 @@ class _NotificationScreenState extends State<NotificationScreen>
     }
   }
 
-  // Helper method to delete a single attachment by path
   Future<void> _deleteAttachmentByPath(String path) async {
     try {
-      // Try to delete using the regular path
       await _storage.ref(path).delete();
       debugPrint('Successfully deleted attachment at path: $path');
     } catch (e) {
       debugPrint('Error deleting attachment: $e');
 
       try {
-        // If that fails, try with a clean path (remove leading slash if exists)
         String cleanPath = path.startsWith('/') ? path.substring(1) : path;
         await _storage.ref(cleanPath).delete();
         debugPrint(
@@ -836,7 +757,6 @@ class _NotificationScreenState extends State<NotificationScreen>
       } catch (e2) {
         debugPrint('Failed to delete attachment with clean path: $e2');
 
-        // Last resort - try with the full URL approach
         try {
           await _storage.refFromURL(path).delete();
           debugPrint('Successfully deleted attachment using full URL approach');
@@ -847,28 +767,22 @@ class _NotificationScreenState extends State<NotificationScreen>
     }
   }
 
-  // Delete message with animation (including attachments)
   Future<void> _deleteMessageWithAnimation(
     String messageId,
     Map<String, dynamic> message,
   ) async {
     try {
-      // Get the animation controller for this message
       final controller = _animationControllers[messageId];
       if (controller != null) {
-        // Start the animation
         await controller.forward();
       }
 
-      // Mark as removed in local state
       setState(() {
         _messagesToRemove.add(messageId);
       });
 
-      // Delete attachments before removing the message document
       await _deleteAttachments(message);
 
-      // Delete from Firebase
       await FirebaseFirestore.instance
           .collection('messages')
           .doc(messageId)
@@ -878,7 +792,6 @@ class _NotificationScreenState extends State<NotificationScreen>
     }
   }
 
-  // Show confirmation before clearing all messages
   Future<void> _confirmClearAllMessages() async {
     if (customerId == null || messages.isEmpty) return;
 
@@ -917,50 +830,38 @@ class _NotificationScreenState extends State<NotificationScreen>
     }
   }
 
-  // Clear all messages with animation and delete all attachments
   Future<void> _clearAllMessages() async {
     setState(() => isClearing = true);
 
     try {
-      // Create a copy of the messages to iterate through
       final messagesToDelete = List<DocumentSnapshot>.from(messages);
       final int totalMessages = messagesToDelete.length;
 
-      // Set up animation durations for smoother effect
       const baseDelay = Duration(milliseconds: 50);
       const completeDelay = Duration(milliseconds: 20);
 
-      // Prepare for fancy animation - pre-calculate curves
-      // Start with the bottom-most message
       for (int i = totalMessages - 1; i >= 0; i--) {
         final messageId = messagesToDelete[i].id;
         final message = messagesToDelete[i].data() as Map<String, dynamic>;
         final controller = _animationControllers[messageId];
 
-        // Add a custom delay for this specific message
         await Future.delayed(baseDelay);
 
         if (!mounted) break;
 
-        // Animate the slide-out effect
         if (controller != null) {
           controller.forward();
 
-          // Wait a short time after animation starts before marking as removed
-          // This creates a smoother overlap between animations
           await Future.delayed(completeDelay);
 
           if (!mounted) break;
 
-          // Mark as removed in UI but keep the animation going
           setState(() {
             _messagesToRemove.add(messageId);
           });
 
-          // Delete attachments first
           await _deleteAttachments(message);
 
-          // Delete from Firebase in the background
           FirebaseFirestore.instance
               .collection('messages')
               .doc(messageId)
@@ -969,7 +870,6 @@ class _NotificationScreenState extends State<NotificationScreen>
         }
       }
 
-      // Short delay at the end for a smoother experience
       await Future.delayed(const Duration(milliseconds: 300));
     } catch (e) {
       debugPrint('Error clearing messages: $e');
@@ -981,7 +881,6 @@ class _NotificationScreenState extends State<NotificationScreen>
   }
 
   Widget _buildEmptyState(BuildContext context) {
-    // Using Center with SingleChildScrollView avoids overflow issues
     return Center(
       child: SingleChildScrollView(
         physics: const AlwaysScrollableScrollPhysics(),
@@ -989,9 +888,8 @@ class _NotificationScreenState extends State<NotificationScreen>
           padding: const EdgeInsets.symmetric(horizontal: 25),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
-            mainAxisSize: MainAxisSize.min, // Use min to prevent overflow
+            mainAxisSize: MainAxisSize.min,
             children: [
-              // Using an icon instead of an image
               Container(
                 width: 120,
                 height: 120,
@@ -1019,7 +917,7 @@ class _NotificationScreenState extends State<NotificationScreen>
                 textAlign: TextAlign.center,
                 style: TextStyle(fontSize: 14, color: Colors.grey.shade600),
               ),
-              const SizedBox(height: 100), // Extra space at bottom
+              const SizedBox(height: 100),
             ],
           ),
         ),
