@@ -12,7 +12,6 @@ class LanguageSelectionScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final size = MediaQuery.of(context).size;
 
-    // Extract common colors and styles to constants
     const headingColor = Color(0xFF303663);
     const subTextColor = Color(0xFF6B7280);
     const circleColor = Color.fromRGBO(57, 87, 237, 0.1);
@@ -34,7 +33,6 @@ class LanguageSelectionScreen extends StatelessWidget {
           child: SafeArea(
             child: Stack(
               children: [
-                // Background decoration elements
                 Positioned(
                   top: -80,
                   right: -80,
@@ -60,13 +58,11 @@ class LanguageSelectionScreen extends StatelessWidget {
                   ),
                 ),
 
-                // Main content
                 Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
                     SizedBox(height: size.height * 0.06),
 
-                    // Heading
                     const Text(
                       "Welcome to UPay",
                       style: TextStyle(
@@ -93,7 +89,6 @@ class LanguageSelectionScreen extends StatelessWidget {
 
                     SizedBox(height: size.height * 0.04),
 
-                    // Illustration
                     SizedBox(
                       height: size.height * 0.34,
                       child: Padding(
@@ -109,7 +104,6 @@ class LanguageSelectionScreen extends StatelessWidget {
 
                     const SizedBox(height: 4),
 
-                    // Language options
                     Expanded(
                       child: Container(
                         width: double.infinity,
@@ -200,9 +194,7 @@ class LanguageButton extends StatefulWidget {
 class _LanguageButtonState extends State<LanguageButton> {
   bool _isPressed = false;
 
-  // Extract the navigation logic to a separate method
   Future<void> _handleLanguageSelection() async {
-    // Set the selected language and navigate to the welcome screen
     Provider.of<LanguageProvider>(
       context,
       listen: false,
@@ -229,7 +221,6 @@ class _LanguageButtonState extends State<LanguageButton> {
 
   @override
   Widget build(BuildContext context) {
-    // Precompute styles based on state
     final buttonColor = _isPressed ? Colors.blue : Colors.white;
     final textColor = _isPressed ? Colors.white : const Color(0xFF303663);
     final letterBgColor =
@@ -268,7 +259,6 @@ class _LanguageButtonState extends State<LanguageButton> {
         padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
         child: Row(
           children: [
-            // Language letter
             Container(
               width: 40,
               height: 40,
@@ -290,7 +280,6 @@ class _LanguageButtonState extends State<LanguageButton> {
 
             const SizedBox(width: 15),
 
-            // Language name
             Text(
               widget.language,
               style: TextStyle(
@@ -302,7 +291,6 @@ class _LanguageButtonState extends State<LanguageButton> {
 
             const Spacer(),
 
-            // Arrow indicator
             Icon(Icons.arrow_forward_ios, size: 16, color: iconColor),
           ],
         ),
