@@ -310,7 +310,6 @@ class SecureStorageService {
     return digest.toString();
   }
 
-
   static const String _lastMessageTimestampKey = 'last_message_timestamp';
   static const String _processedMessageIdsKey = 'processed_message_ids';
   static const String _lastTappedMessageIdKey = 'last_tapped_message_id';
