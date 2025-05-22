@@ -65,7 +65,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
   Widget build(BuildContext context) {
     final appLocalizations = AppLocalizations.of(context);
 
-    // Format date
     String formattedDate = '';
     if (widget.message['createdAt'] != null) {
       try {
@@ -81,20 +80,17 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
       }
     }
 
-    // Extract message title and content
     final String title =
         widget.message['heading'] ?? (appLocalizations?.message ?? 'Message');
     final String content =
         widget.message['message'] ??
         (appLocalizations?.no_content ?? 'No content');
 
-    // Get icon based on message heading
     IconData icon;
     Color iconColor;
     Color iconBgColor;
     String lowerTitle = title.toLowerCase();
 
-    // Determine icon and color based on message heading
     if (lowerTitle.contains('alert') || lowerTitle.contains('important')) {
       icon = Icons.warning_amber_rounded;
       iconColor = Colors.red;
@@ -138,7 +134,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         child: Column(
           children: [
             const SizedBox(height: 50),
-            // Custom AppBar with delete button - matching the notification screen layout
             Stack(
               alignment: Alignment.center,
               children: [
@@ -167,7 +162,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
                     ),
                   ),
                 ),
-                // Delete icon on the right
                 Align(
                   alignment: Alignment.centerRight,
                   child: Padding(
@@ -189,7 +183,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
             ),
             const SizedBox(height: 50),
 
-            // Main content
             Expanded(
               child: SingleChildScrollView(
                 child: Padding(
@@ -197,7 +190,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Message header with icon
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
@@ -254,7 +246,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
 
                       const SizedBox(height: 24),
 
-                      // Message content
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.all(20),
@@ -295,7 +286,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
                         ),
                       ),
 
-                      // Attachments section
                       if (_attachments.isNotEmpty || _isLoading) ...[
                         const SizedBox(height: 24),
                         Container(
@@ -339,7 +329,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
                               ),
                               const SizedBox(height: 16),
 
-                              // Loading indicator for attachments
                               if (_isLoading)
                                 Center(
                                   child: Padding(
@@ -358,7 +347,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
                         ),
                       ],
 
-                      // Download progress indicator
                       if (isDownloading)
                         Container(
                           margin: const EdgeInsets.symmetric(vertical: 24),
@@ -440,7 +428,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
           attachment['fileType'] ?? _getFileTypeFromName(fileName);
       final int fileSize = attachment['size'] ?? 0;
 
-      // Format file size
       String formattedSize = '';
       if (fileSize > 0) {
         if (fileSize < 1024) {
@@ -452,7 +439,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         }
       }
 
-      // Check if it's an image (for icon selection only, no preview)
       final bool isImage =
           fileType.toLowerCase().contains('image') ||
           fileType.toLowerCase() == 'png' ||
@@ -462,11 +448,9 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
           fileName.toLowerCase().endsWith('.jpg') ||
           fileName.toLowerCase().endsWith('.jpeg');
 
-      // Get file icon - use image icon for images
       final IconData fileIcon = isImage ? Icons.image : _getFileIcon(fileName);
       final Color iconColor = isImage ? Colors.blue : _getIconColor(fileName);
 
-      // Display all files in the same list item style
       return Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -620,7 +604,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
     }
   }
 
-  // FIXED FILE OPENER - opens directly without asking for download
   Future<void> _openFile(String url, String fileType, String fileName) async {
     final appLocalizations = AppLocalizations.of(context);
 
@@ -646,7 +629,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
     });
 
     try {
-      // STRATEGY 1: Try direct URL launch first - fastest method
       setState(() {
         downloadProgress = 0.3;
         downloadingFileName =
@@ -672,7 +654,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         debugPrint('Direct URL launch failed: $e');
       }
 
-      // STRATEGY 2: For PDF and documents on Android, try Google Docs viewer
       if (!launched &&
           Platform.isAndroid &&
           (fileType.contains('pdf') ||
@@ -705,20 +686,17 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         }
       }
 
-      // STRATEGY 3: Download and then launch the file
       setState(() {
         downloadProgress = 0.5;
         downloadingFileName =
             '${appLocalizations?.downloading_for_viewing ?? 'Downloading for viewing'}...';
       });
 
-      // Download to app documents directory (more reliable than cache)
       final appDir = await getApplicationDocumentsDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filePath = '${appDir.path}/${timestamp}_$fileName';
       final file = File(filePath);
 
-      // Download file
       final response = await http.get(Uri.parse(url));
       if (response.statusCode != 200) {
         throw Exception(
@@ -734,8 +712,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
             '${appLocalizations?.opening ?? 'Opening file'}...';
       });
 
-      // For images and PDFs, try using the Share.shareXFiles method
-      // which handles file permissions better than direct file:// URIs
       if (fileType.contains('image') ||
           fileType.contains('pdf') ||
           fileName.toLowerCase().endsWith('.jpg') ||
@@ -753,14 +729,11 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
           return;
         } catch (e) {
           debugPrint('Share.shareXFiles failed: $e');
-          // Continue to last resort
         }
       }
 
-      // STRATEGY 4: Last resort - try different ways to launch the file
       if (Platform.isAndroid) {
         try {
-          // Try the safest method first - launching the original URL again
           launched = await launchUrl(
             directUri,
             mode: LaunchMode.externalNonBrowserApplication,
@@ -770,7 +743,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         }
 
         if (!launched) {
-          // Just inform the user the file is downloaded
           if (!mounted) return;
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -783,11 +755,9 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
             ),
           );
 
-          // Try one more time after a short delay
           await Future.delayed(const Duration(seconds: 1));
 
           try {
-            // This will trigger a system file selector
             final directLaunch = await launchUrl(Uri.parse(url));
             if (!directLaunch) {
               throw Exception(
@@ -804,7 +774,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
           }
         }
       } else {
-        // iOS should work better with file URIs
         final fileUri = Uri.file(file.path);
         launched = await launchUrl(fileUri, mode: LaunchMode.platformDefault);
 
@@ -827,7 +796,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
 
       if (!mounted) return;
 
-      // Auto-download instead of asking
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
@@ -839,13 +807,11 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         ),
       );
 
-      // Auto-start download after a short delay
       await Future.delayed(const Duration(seconds: 1));
       _downloadFile(url, fileName, fileType);
     }
   }
 
-  // FIXED DOWNLOAD METHOD
   Future<void> _downloadFile(
     String url,
     String fileName,
@@ -867,7 +833,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
       return;
     }
 
-    // Request storage permission
     var storageStatus = await Permission.storage.status;
     if (!storageStatus.isGranted) {
       storageStatus = await Permission.storage.request();
@@ -894,7 +859,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
     });
 
     try {
-      // Download file to memory first to avoid incomplete downloads
       setState(() {
         downloadProgress = 0.3;
       });
@@ -912,25 +876,20 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         downloadProgress = 0.6;
       });
 
-      // Find a suitable download directory
       Directory? downloadDir;
       if (Platform.isAndroid) {
-        // Try to get the Downloads directory
         try {
           downloadDir = Directory('/storage/emulated/0/Download');
           if (!await downloadDir.exists()) {
             downloadDir = await getExternalStorageDirectory();
           }
         } catch (e) {
-          // Fallback to app-specific directory
           downloadDir = await getApplicationDocumentsDirectory();
         }
       } else {
-        // iOS uses documents directory
         downloadDir = await getApplicationDocumentsDirectory();
       }
 
-      // Create a unique filename to avoid overwriting
       String baseName = fileName;
       String extension = '';
 
@@ -940,10 +899,8 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         extension = fileName.substring(lastDotIndex);
       }
 
-      // Provide a fallback using null-aware assignment
       downloadDir ??= await getApplicationDocumentsDirectory();
 
-      // Try to find a unique name
       int counter = 1;
       String uniqueFileName = fileName;
       File file = File('${downloadDir.path}/$uniqueFileName');
@@ -953,11 +910,9 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         file = File('${downloadDir.path}/$uniqueFileName');
       }
 
-      // Write file in a single operation
       try {
         await file.writeAsBytes(bytes, flush: true);
       } catch (e) {
-        // Try to save in app's documents directory as fallback
         final appDir = await getApplicationDocumentsDirectory();
         file = File('${appDir.path}/$uniqueFileName');
         await file.writeAsBytes(bytes, flush: true);
@@ -978,7 +933,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
           action: SnackBarAction(
             label: appLocalizations?.view ?? 'VIEW',
             onPressed: () {
-              // Use the direct URL to open the file, not a file:// URI
               launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
             },
           ),
@@ -1002,7 +956,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
     }
   }
 
-  // FIXED share file function
   Future<void> _shareFile(String url, String fileName, String fileType) async {
     final appLocalizations = AppLocalizations.of(context);
 
@@ -1028,7 +981,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
     });
 
     try {
-      // Download to cache first
       setState(() {
         downloadProgress = 0.3;
       });
@@ -1039,7 +991,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         downloadProgress = 0.6;
       });
 
-      // Use the app's cache directory
       final tempDir = await getTemporaryDirectory();
       final timestamp = DateTime.now().millisecondsSinceEpoch;
       final filePath = '${tempDir.path}/${timestamp}_$fileName';
@@ -1051,7 +1002,6 @@ class _MessageViewScreenState extends State<MessageViewScreen> {
         downloadProgress = 0.9;
       });
 
-      // Share using XFile which handles Android 7+ file sharing properly
       final xFile = XFile(file.path);
       await Share.shareXFiles([
         xFile,
