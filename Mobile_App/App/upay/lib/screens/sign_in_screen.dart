@@ -16,16 +16,13 @@ class SignInScreen extends StatefulWidget {
 
 class _SignInScreenState extends State<SignInScreen>
     with WidgetsBindingObserver {
-  // Controllers and form key
   final TextEditingController nicController = TextEditingController();
   final TextEditingController phoneController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-  // Focus nodes
   final FocusNode _nicFocusNode = FocusNode();
   final FocusNode _phoneFocusNode = FocusNode();
 
-  // State flags - using bool instead of multiple enums for memory efficiency
   bool _isNicValid = false;
   bool _isLoading = false;
   bool _isPressed = false;
@@ -33,16 +30,12 @@ class _SignInScreenState extends State<SignInScreen>
   bool _isAnyFieldFocused = false;
   bool _isKeyboardVisible = false;
 
-  // For error display
   String? _errorText;
 
-  // Timer for auth timeout
   Timer? _authTimeoutTimer;
 
-  // Auth timeout duration (15 seconds is reasonable)
   static const authTimeoutDuration = Duration(seconds: 15);
 
-  // Regular expressions compiled once for reuse
   static final RegExp _nicType1Regex = RegExp(r'^\d{12}$');
   static final RegExp _nicType2Regex = RegExp(r'^\d{9}[vV]$');
   static final RegExp _nonDigitsRegex = RegExp(r'\D');
@@ -57,7 +50,6 @@ class _SignInScreenState extends State<SignInScreen>
 
   @override
   void dispose() {
-    // Clean up to prevent memory leaks
     WidgetsBinding.instance.removeObserver(this);
     _nicFocusNode.removeListener(_handleFocusChange);
     _phoneFocusNode.removeListener(_handleFocusChange);
@@ -86,13 +78,11 @@ class _SignInScreenState extends State<SignInScreen>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Only update state if necessary
     if (state == AppLifecycleState.resumed && _isLoading) {
       setState(() => _isLoading = false);
     }
   }
 
-  // Start timeout timer for auth process
   void _startAuthTimeout() {
     _authTimeoutTimer?.cancel();
     _authTimeoutTimer = Timer(authTimeoutDuration, () {
@@ -107,13 +97,11 @@ class _SignInScreenState extends State<SignInScreen>
     });
   }
 
-  // Cancel timeout timer
   void _cancelAuthTimeout() {
     _authTimeoutTimer?.cancel();
     _authTimeoutTimer = null;
   }
 
-  // Optimized NIC validation - avoid redundant regex checks
   bool _validateNicFormat(String nic) {
     final int length = nic.length;
     if (length == 12) {
@@ -124,7 +112,6 @@ class _SignInScreenState extends State<SignInScreen>
     return false;
   }
 
-  // Optimized phone formatting with fewer string operations
   String _formatPhoneNumber(String phone) {
     String cleanPhone = phone.replaceAll(_nonDigitsRegex, '');
 
@@ -140,7 +127,6 @@ class _SignInScreenState extends State<SignInScreen>
     return phone;
   }
 
-  // Check internet connection
   Future<bool> _checkInternetConnection() async {
     try {
       var connectivityResult = await Connectivity().checkConnectivity();
@@ -148,13 +134,11 @@ class _SignInScreenState extends State<SignInScreen>
           connectivityResult.contains(ConnectivityResult.mobile) ||
           connectivityResult.contains(ConnectivityResult.ethernet);
     } catch (e) {
-      // If there's an error checking connectivity, assume no connection
       debugPrint("Error checking connectivity: $e");
       return false;
     }
   }
 
-  // Reset all form data
   void _resetForm() {
     nicController.clear();
     phoneController.clear();
@@ -166,7 +150,6 @@ class _SignInScreenState extends State<SignInScreen>
     });
   }
 
-  // Navigate to OTP screen and refresh this page when returning
   void _navigateToOtp({
     required String phoneNumber,
     required String nic,
@@ -174,10 +157,8 @@ class _SignInScreenState extends State<SignInScreen>
     int? resendToken,
     PhoneAuthCredential? credential,
   }) async {
-    // Cancel the timeout timer since we're navigating
     _cancelAuthTimeout();
 
-    // Reset form before navigation
     _resetForm();
 
     await Navigator.push(
@@ -195,7 +176,6 @@ class _SignInScreenState extends State<SignInScreen>
     );
   }
 
-  // Submit form handler
   Future<void> _signIn() async {
     FocusScope.of(context).unfocus();
 
@@ -204,7 +184,6 @@ class _SignInScreenState extends State<SignInScreen>
       _isAnyFieldFocused = false;
     });
 
-    // Quick validation before full form validation
     final String nic = nicController.text;
     final String phone = phoneController.text;
 
@@ -222,7 +201,6 @@ class _SignInScreenState extends State<SignInScreen>
 
     if (!_formKey.currentState!.validate()) return;
 
-    // Check internet connection first
     bool hasInternet = await _checkInternetConnection();
     if (!hasInternet) {
       if (!mounted) return;
@@ -236,7 +214,6 @@ class _SignInScreenState extends State<SignInScreen>
 
     setState(() => _isLoading = true);
 
-    // Start timeout timer to handle cases where Firebase doesn't respond
     _startAuthTimeout();
 
     final String formattedPhone = _formatPhoneNumber(phone.trim());
@@ -250,7 +227,6 @@ class _SignInScreenState extends State<SignInScreen>
 
           setState(() => _isLoading = false);
 
-          // Cancel timeout since we got a response
           _cancelAuthTimeout();
 
           await AuthService.saveUserLogin(
@@ -269,12 +245,10 @@ class _SignInScreenState extends State<SignInScreen>
         verificationFailed: (FirebaseAuthException e) {
           if (!mounted) return;
 
-          // Cancel timeout since we got a response
           _cancelAuthTimeout();
 
           setState(() {
             _isLoading = false;
-            // For any Firebase errors, display generic connection error
             _errorText =
                 AppLocalizations.of(context)?.connection_error ??
                 'Connection error, Try again';
@@ -283,7 +257,6 @@ class _SignInScreenState extends State<SignInScreen>
         codeSent: (String verificationId, int? resendToken) {
           if (!mounted) return;
 
-          // Cancel timeout since we got a response
           _cancelAuthTimeout();
 
           setState(() => _isLoading = false);
@@ -298,7 +271,6 @@ class _SignInScreenState extends State<SignInScreen>
         codeAutoRetrievalTimeout: (String verificationId) {
           if (!mounted) return;
 
-          // We will only respond if we're still loading
           if (_isLoading) {
             _cancelAuthTimeout();
 
@@ -310,19 +282,15 @@ class _SignInScreenState extends State<SignInScreen>
             });
           }
         },
-        timeout: const Duration(
-          seconds: 30,
-        ), // Set Firebase timeout to 30 seconds
+        timeout: const Duration(seconds: 30),
       );
     } catch (e) {
       if (!mounted) return;
 
-      // Cancel timeout since we got an error response
       _cancelAuthTimeout();
 
       setState(() {
         _isLoading = false;
-        // For any exceptions, display generic connection error
         _errorText =
             AppLocalizations.of(context)?.connection_error ??
             'Connection error, Try again';
@@ -332,23 +300,19 @@ class _SignInScreenState extends State<SignInScreen>
 
   @override
   Widget build(BuildContext context) {
-    // Reuse dimensions
     final size = MediaQuery.of(context).size;
     final horizontalPadding = size.width < 600 ? 40.0 : 50.0;
     final imageHeight = size.width < 600 ? 300.0 : 280.0;
 
-    // Check if keyboard is visible
     final viewInsets = MediaQuery.of(context).viewInsets;
     _isKeyboardVisible = viewInsets.bottom > 0;
 
-    // Reuse colors
     final borderColor = Colors.blue.shade100;
     final buttonStartColor = Colors.blue.shade300;
     final buttonEndColor = Colors.blue.shade500;
     final buttonPressedStartColor = Colors.blue.shade800;
     final buttonPressedEndColor = Colors.blue.shade900;
 
-    // Circle bubble color (same as welcome page)
     const circleColor = Color.fromRGBO(59, 130, 246, 0.07);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -358,7 +322,6 @@ class _SignInScreenState extends State<SignInScreen>
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFFEFEFF),
-        // This preserves the bottom bubble position when keyboard opens
         resizeToAvoidBottomInset: false,
         body: Container(
           width: double.infinity,
@@ -373,7 +336,6 @@ class _SignInScreenState extends State<SignInScreen>
           child: SafeArea(
             child: Stack(
               children: [
-                // Decorative circle bubbles (same as welcome page)
                 Positioned(
                   top: -size.width * 0.24,
                   right: -size.width * 0.24,
@@ -399,12 +361,10 @@ class _SignInScreenState extends State<SignInScreen>
                   ),
                 ),
 
-                // Main content
                 Form(
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Fixed position header - doesn't change regardless of keyboard
                       Padding(
                         padding: EdgeInsets.only(
                           top: 60.0,
@@ -430,11 +390,8 @@ class _SignInScreenState extends State<SignInScreen>
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Space between heading and content
-
                               SizedBox(height: _isKeyboardVisible ? 120 : 65),
 
-                              // Only show image when keyboard is not visible
                               if (!_isKeyboardVisible) ...[
                                 Image.asset(
                                   'assets/images/sign_in/sign_in.png',
@@ -444,7 +401,6 @@ class _SignInScreenState extends State<SignInScreen>
                                 const SizedBox(height: 24),
                               ],
 
-                              // NIC Field
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
@@ -514,7 +470,6 @@ class _SignInScreenState extends State<SignInScreen>
                               ),
                               const SizedBox(height: 15),
 
-                              // Phone Number Field
                               Container(
                                 decoration: BoxDecoration(
                                   borderRadius: BorderRadius.circular(12),
@@ -570,7 +525,6 @@ class _SignInScreenState extends State<SignInScreen>
 
                               const SizedBox(height: 30),
 
-                              // Sign In Button
                               GestureDetector(
                                 onTapDown:
                                     (_) => setState(() => _isPressed = true),
@@ -673,14 +627,12 @@ class _SignInScreenState extends State<SignInScreen>
                                 ),
                               ),
 
-                              // Bottom padding depending on keyboard visibility
                               SizedBox(height: _isKeyboardVisible ? 10 : 20),
                             ],
                           ),
                         ),
                       ),
 
-                      // Error messages - only show when keyboard is hidden
                       if (_submitted &&
                           !_isAnyFieldFocused &&
                           !_isKeyboardVisible)
@@ -703,11 +655,9 @@ class _SignInScreenState extends State<SignInScreen>
     );
   }
 
-  // Error message widget
   Widget? _getErrorWidget() {
     String? errorMessage;
 
-    // Simplified error message resolution with fewer checks
     if (nicController.text.isEmpty && phoneController.text.isEmpty) {
       errorMessage =
           AppLocalizations.of(context)?.enter_valid_nic_and_phone ??
@@ -735,7 +685,6 @@ class _SignInScreenState extends State<SignInScreen>
     return errorMessage != null ? _buildErrorText(errorMessage) : null;
   }
 
-  // Simple error text builder
   Widget _buildErrorText(String message) {
     return Text(
       message,
