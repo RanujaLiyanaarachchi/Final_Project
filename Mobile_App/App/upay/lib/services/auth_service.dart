@@ -79,7 +79,7 @@ class AuthService {
     try {
       String? nic = await SecureStorageService.getUserNic();
 
-      if (nic.isEmpty) {
+      if (nic == null || nic.isEmpty) {
         debugPrint("User NIC not found. Cannot update FCM token.");
         return;
       }
