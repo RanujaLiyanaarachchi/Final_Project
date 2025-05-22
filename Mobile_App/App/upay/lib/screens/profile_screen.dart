@@ -24,7 +24,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
   String? _profileImageUrl;
   bool _isLoadingImage = true;
 
-  // User data
   String fullName = '';
   String accountNumber = '';
   String customerId = '';
@@ -41,8 +40,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
   static const String _cacheKey = 'profile_data_cache';
   static const String _cacheDateKey = 'profile_data_cache_date';
   static const String _cacheImageKey = 'profile_image_cache';
-  static const int _cacheValidityHours = 24; // Cache valid for 24 hours
-  
+  static const int _cacheValidityHours = 24;
+
   @override
   void initState() {
     super.initState();
@@ -51,15 +50,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   Future<void> _loadData() async {
     try {
-      // First try to load from cache
       if (await _loadFromCache()) {
         setState(() {
           _isLoading = false;
         });
         return;
       }
-      
-      // If cache not available or expired, load from network
+
       await _loadUserData();
     } catch (e) {
       setState(() {
@@ -68,33 +65,28 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
   }
-  
+
   Future<bool> _loadFromCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final cachedDataJson = prefs.getString(_cacheKey);
       final cacheDateString = prefs.getString(_cacheDateKey);
       final cachedImageUrl = prefs.getString(_cacheImageKey);
-      
-      // Check if cache exists
+
       if (cachedDataJson == null || cacheDateString == null) {
         return false;
       }
-      
-      // Check if cache is still valid (not expired)
+
       final cacheDate = DateTime.parse(cacheDateString);
       final now = DateTime.now();
       final difference = now.difference(cacheDate);
-      
+
       if (difference.inHours > _cacheValidityHours) {
-        // Cache expired
         return false;
       }
-      
-      // Parse cached data
+
       final Map<String, dynamic> cachedData = jsonDecode(cachedDataJson);
-      
-      // Set state from cached data
+
       setState(() {
         fullName = cachedData['fullName'] ?? '';
         accountNumber = cachedData['accountNumber'] ?? '';
@@ -107,28 +99,26 @@ class _ProfileScreenState extends State<ProfileScreen> {
         landLine = cachedData['landLine'] ?? '';
         mobile = cachedData['mobile'] ?? '';
         userId = cachedData['userId'] ?? '';
-        
-        // Load image URL if available in cache
+
         if (cachedImageUrl != null && cachedImageUrl.isNotEmpty) {
           _profileImageUrl = cachedImageUrl;
         }
-        
+
         _isLoadingImage = false;
       });
-      
-      debugPrint("DEBUG: Loaded profile data from cache");
+
+      debugPrint("Loaded profile data from cache");
       return true;
     } catch (e) {
-      debugPrint("ERROR: Failed to load from cache: $e");
+      debugPrint("Failed to load from cache: $e");
       return false;
     }
   }
-  
+
   Future<void> _saveToCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
-      // Create data map
+
       final Map<String, dynamic> cacheData = {
         'fullName': fullName,
         'accountNumber': accountNumber,
@@ -142,24 +132,20 @@ class _ProfileScreenState extends State<ProfileScreen> {
         'mobile': mobile,
         'userId': userId,
       };
-      
-      // Save to shared preferences
+
       await prefs.setString(_cacheKey, jsonEncode(cacheData));
       await prefs.setString(_cacheDateKey, DateTime.now().toIso8601String());
-      
-      // Save image URL separately
+
       if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
         await prefs.setString(_cacheImageKey, _profileImageUrl!);
       }
-      
-      debugPrint("DEBUG: Saved profile data to cache");
+
+      debugPrint("Saved profile data to cache");
     } catch (e) {
-      debugPrint("ERROR: Failed to save to cache: $e");
+      debugPrint("Failed to save to cache: $e");
     }
   }
 
-  // Clear cache on sign out - exposed for use by authentication service
-  // You can access this method from outside using ProfileScreen.clearCache()
   @pragma('vm:entry-point')
   static Future<void> clearCache() async {
     try {
@@ -167,19 +153,17 @@ class _ProfileScreenState extends State<ProfileScreen> {
       await prefs.remove(_cacheKey);
       await prefs.remove(_cacheDateKey);
       await prefs.remove(_cacheImageKey);
-      debugPrint("DEBUG: Profile cache cleared");
+      debugPrint("Profile cache cleared");
     } catch (e) {
-      debugPrint("ERROR: Failed to clear profile cache: $e");
+      debugPrint("Failed to clear profile cache: $e");
     }
   }
 
   Future<void> _loadUserData() async {
     try {
-      // Get current user ID
       final User? currentUser = _auth.currentUser;
       userId = currentUser?.uid ?? '';
 
-      // Get NIC from secure storage instead of shared preferences
       final userNic = await SecureStorageService.getUserNic();
 
       if (userNic == null || userNic.isEmpty) {
@@ -191,14 +175,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         return;
       }
 
-      // Set the NIC value immediately
       setState(() {
         nic = userNic;
       });
 
-      debugPrint('DEBUG: Fetching user data with NIC: $userNic');
+      debugPrint('Fetching user data with NIC: $userNic');
 
-      // Query Firestore for customer data
       final QuerySnapshot snapshot =
           await _firestore
               .collection('customers')
@@ -206,7 +188,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
               .limit(1)
               .get();
 
-      // Try alternative NIC formats if no results
       if (snapshot.docs.isEmpty && userNic.length == 10) {
         String alternativeNic;
         if (userNic.endsWith('v')) {
@@ -228,7 +209,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
           if (alternativeSnapshot.docs.isNotEmpty) {
             _updateUserDataFromDocument(alternativeSnapshot.docs.first);
             await _loadProfileImage();
-            // Save to cache
             await _saveToCache();
             return;
           }
@@ -236,12 +216,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       } else if (snapshot.docs.isNotEmpty) {
         _updateUserDataFromDocument(snapshot.docs.first);
         await _loadProfileImage();
-        // Save to cache
         await _saveToCache();
         return;
       }
 
-      // Final attempt with current Firebase user's phone number
       if (currentUser != null && currentUser.phoneNumber != null) {
         final phoneSnapshot =
             await _firestore
@@ -253,13 +231,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
         if (phoneSnapshot.docs.isNotEmpty) {
           _updateUserDataFromDocument(phoneSnapshot.docs.first);
           await _loadProfileImage();
-          // Save to cache
           await _saveToCache();
           return;
         }
       }
 
-      // If we got here, no data was found
       setState(() {
         _isLoading = false;
         _isLoadingImage = false;
@@ -283,55 +259,50 @@ class _ProfileScreenState extends State<ProfileScreen> {
     });
 
     try {
-      debugPrint("DEBUG: Starting profile image loading...");
-      debugPrint("DEBUG: userId=$userId, customerId=$customerId, nic=$nic");
+      debugPrint("Starting profile image loading...");
+      debugPrint("userId=$userId, customerId=$customerId, nic=$nic");
 
-      // First check if we already have a URL from the document
       if (_profileImageUrl != null && _profileImageUrl!.isNotEmpty) {
-        debugPrint("DEBUG: Using existing profile URL: $_profileImageUrl");
+        debugPrint("Using existing profile URL: $_profileImageUrl");
         setState(() {
           _isLoadingImage = false;
         });
         return;
       }
 
-      // Build a list of identifiers to use (prioritizing userId)
       List<String> identifiers = [];
       if (userId.isNotEmpty) identifiers.add(userId);
       if (customerId.isNotEmpty) identifiers.add(customerId);
       if (nic.isNotEmpty) identifiers.add(nic);
 
       if (identifiers.isEmpty) {
-        debugPrint("DEBUG: No identifiers available, skipping image loading");
+        debugPrint("No identifiers available, skipping image loading");
         setState(() {
           _isLoadingImage = false;
         });
         return;
       }
 
-      debugPrint("DEBUG: Will try with identifiers: $identifiers");
+      debugPrint("Will try with identifiers: $identifiers");
 
-      // First try using listAll to see what files actually exist
       try {
-        debugPrint("DEBUG: Listing files in customer_images folder");
+        debugPrint("Listing files in customer_images folder");
         final listResult = await _storage.ref('customer_images').listAll();
 
         debugPrint(
-          "DEBUG: Found ${listResult.items.length} files in customer_images folder",
+          "Found ${listResult.items.length} files in customer_images folder",
         );
         for (var item in listResult.items) {
-          debugPrint("DEBUG: File found: ${item.name}");
+          debugPrint("File found: ${item.name}");
         }
 
-        // Now check if any of our identifiers match the file names
         for (final id in identifiers) {
           for (var item in listResult.items) {
-            // Check if file name contains our ID
             if (item.name.contains(id)) {
-              debugPrint("DEBUG: Found matching file for ID $id: ${item.name}");
+              debugPrint("Found matching file for ID $id: ${item.name}");
               try {
                 final url = await item.getDownloadURL();
-                debugPrint("DEBUG: Got download URL: $url");
+                debugPrint("Got download URL: $url");
 
                 if (mounted) {
                   setState(() {
@@ -339,27 +310,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     _isLoadingImage = false;
                   });
                 }
-                
-                // Save image URL to cache
+
                 final prefs = await SharedPreferences.getInstance();
                 await prefs.setString(_cacheImageKey, url);
-                
+
                 return;
               } catch (e) {
-                debugPrint("DEBUG: Error getting download URL: $e");
+                debugPrint("Error getting download URL: $e");
               }
             }
           }
         }
 
-        debugPrint("DEBUG: No matching files found in listing");
+        debugPrint("No matching files found in listing");
       } catch (e) {
-        debugPrint("DEBUG: Error listing files: $e");
-        // Fall back to direct path attempts
+        debugPrint("Error listing files: $e");
       }
 
-      // If list approach failed, try direct paths
-      debugPrint("DEBUG: Trying direct paths");
+      debugPrint("Trying direct paths");
 
       for (final id in identifiers) {
         final paths = [
@@ -375,38 +343,35 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
         for (final path in paths) {
           try {
-            debugPrint("DEBUG: Trying path: $path");
+            debugPrint("Trying path: $path");
             final ref = _storage.ref().child(path);
             final url = await ref.getDownloadURL();
 
-            debugPrint("DEBUG: Success! Found image at $path");
+            debugPrint("Success! Found image at $path");
             if (mounted) {
               setState(() {
                 _profileImageUrl = url;
                 _isLoadingImage = false;
               });
-              
-              // Save image URL to cache
+
               final prefs = await SharedPreferences.getInstance();
               await prefs.setString(_cacheImageKey, url);
             }
             return;
           } catch (e) {
-            debugPrint("DEBUG: Failed for path $path: $e");
-            // Continue to next path
+            debugPrint("Failed for path $path: $e");
           }
         }
       }
 
-      // If we get here, no profile image was found
-      debugPrint("DEBUG: No profile image found after all attempts");
+      debugPrint("No profile image found after all attempts");
       if (mounted) {
         setState(() {
           _isLoadingImage = false;
         });
       }
     } catch (e) {
-      debugPrint("DEBUG: Error in _loadProfileImage: $e");
+      debugPrint("Error in _loadProfileImage: $e");
       if (mounted) {
         setState(() {
           _isLoadingImage = false;
@@ -419,7 +384,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     try {
       final data = doc.data() as Map<String, dynamic>;
 
-      // Check for profile image URL in document first
       String? docProfileImageUrl;
       if (data.containsKey('profileImage') && data['profileImage'] != null) {
         docProfileImageUrl = data['profileImage'];
@@ -434,7 +398,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
         docProfileImageUrl = data['image'];
       }
 
-      // Get user ID if it's in the document
       String? docUserId =
           data['userId'] ?? data['uid'] ?? data['user_id'] ?? '';
 
@@ -453,17 +416,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
         landLine = data['landPhone'] ?? data['landLine'] ?? '';
         mobile = data['mobileNumber'] ?? data['mobile'] ?? '';
 
-        // Update user ID if found in document
         if (docUserId != null && docUserId.isNotEmpty) {
           userId = docUserId;
         }
 
-        // Set profile image URL if found in document
         if (docProfileImageUrl != null && docProfileImageUrl.isNotEmpty) {
           _profileImageUrl = docProfileImageUrl;
           _isLoadingImage = false;
-          
-          // Save image URL to cache
+
           SharedPreferences.getInstance().then((prefs) {
             if (docProfileImageUrl != null) {
               prefs.setString(_cacheImageKey, docProfileImageUrl);
@@ -481,8 +441,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
       });
     }
   }
-  
-  // Force refresh data
+
   Future<void> _refreshData() async {
     setState(() {
       _isLoading = true;
@@ -521,12 +480,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       backgroundColor: const Color(0xFFFEF7FF),
       body: Column(
         children: [
-          const SizedBox(height: 80), // Space before AppBar
-          // Custom AppBar Row
+          const SizedBox(height: 80),
           Stack(
             alignment: Alignment.center,
             children: [
-              // Centered title
               Text(
                 AppLocalizations.of(context)?.profile ?? 'Profile',
                 style: const TextStyle(
@@ -536,7 +493,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
 
-              // Left aligned back button
               Align(
                 alignment: Alignment.centerLeft,
                 child: Padding(
@@ -554,8 +510,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                 ),
               ),
-              
-              // Right aligned refresh button
+
               Align(
                 alignment: Alignment.centerRight,
                 child: Padding(
@@ -565,10 +520,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     onTap: _refreshData,
                     child: const Padding(
                       padding: EdgeInsets.all(10.0),
-                      child: Icon(
-                        Icons.refresh,
-                        color: Colors.black54,
-                      ),
+                      child: Icon(Icons.refresh, color: Colors.black54),
                     ),
                   ),
                 ),
@@ -628,7 +580,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
             Expanded(
               child: Column(
                 children: [
-                  // Profile image and basic info
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25.0),
                     child: Column(
@@ -636,7 +587,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: 50),
                         Row(
                           children: [
-                            // FIXED profile image section with better error
                             Container(
                               decoration: BoxDecoration(
                                 shape: BoxShape.circle,
@@ -676,7 +626,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                               stackTrace,
                                             ) {
                                               debugPrint(
-                                                "DEBUG: Error rendering image: $error",
+                                                "Error rendering image: $error",
                                               );
                                               return Image.asset(
                                                 "assets/images/profile/profile.png",
@@ -744,7 +694,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                     ),
                   ),
 
-                  // Scrollable user detail fields
                   Expanded(
                     child: RefreshIndicator(
                       onRefresh: _refreshData,
