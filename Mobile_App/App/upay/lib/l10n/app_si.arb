@@ -1,20 +1,12 @@
 {
   "@@locale": "si",
   "app_name": "UPay",
-
-  
   "hiThere": "ආයුබෝවන්,",
   "welcome_to_UPay": "UPay වෙත පිළිගනිමු",
   "welcome_message": "මුදල් කළමනාකරණය පහසු කිරීමේ මග",
   "lets_begin": "ඉදිරියට යමු",
-
-  
   "sign_in": "පිවිසෙන්න",
   "nic": "හැඳුනුම්පත් අංකය",
-
-
-
-
   "email": "ඊමේල්",
   "password": "මුරපදය",
   "forgot_password": "මුරපදය අමතකද?",
@@ -41,7 +33,6 @@
   "total_payable": "ගෙවිය යුතු මුළු මුදල",
   "payable_amount": "ගෙවිය යුතු මුදල",
   "account_number": "ගිණුම් අංකය",
-
   "amount": "මුදල",
   "next": "ඊළඟ",
   "payment_gateway": "ගෙවීම් ද්වාරය",
@@ -242,10 +233,6 @@
   "uniconFinance": "යුනිකොන් ෆිනෑන්ස්",
   "tapToViewOnMap": "සිතියමෙහි බැලීමට ස්පර්ශ කරන්න",
   "biometrics": "ජෛවමිතික",
-  "enableBiometrics": "ජෛවමිතික සබල කරන්න",
-  "biometricAuthentication": "ජෛවමිතික සත්‍යාපනය",
-  "useBiometrics": "ජෛවමිතික භාවිතා කරන්න",
-  "biometricsNotAvailable": "ජෛවමිතික ලබා ගත නොහැක",
   "set_up_pin": "පින් අංකය සකසන්න",
   "create_pin_message": "ඔබගේ යෙදුම ආරක්ෂා කිරීමට පින් අංකයක් සාදන්න",
   "support": "සහය",
@@ -262,7 +249,6 @@
   "delete_notification_confirmation": "දැනුම්දීම මකන්න?",
   "delete_notification": "දැනුම්දීම මකන්න",
   "error_deleting_message": "පණිවිඩය මැකීමේ දෝෂයක්",
-  "message_deleted": "පණිවිඩය මකා දමන ලදී",
   "enter_pin": "පින් අංකය ඇතුළත් කරන්න",
   "confirm_pin": "පින් අංකය තහවුරු කරන්න",
   "profile_image_updated": "පැතිකඩ රූපය යාවත්කාලීන කරන ලදී",
