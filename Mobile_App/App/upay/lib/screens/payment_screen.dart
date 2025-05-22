@@ -23,12 +23,10 @@ class PaymentAmountFormatter extends TextInputFormatter {
     TextEditingValue oldValue,
     TextEditingValue newValue,
   ) {
-    // If the new value is empty, return as is
     if (newValue.text.isEmpty) {
       return newValue;
     }
 
-    // Remove all non-digit characters
     String digitsOnly = newValue.text.replaceAll(RegExp(r'[^\d]'), '');
     
     if (digitsOnly.isEmpty) {
@@ -38,13 +36,10 @@ class PaymentAmountFormatter extends TextInputFormatter {
       );
     }
 
-    // Convert to double (divide by 100 to handle decimals properly)
     double value = int.parse(digitsOnly) / 100;
 
-    // Format with commas
     String formatted = _formatter.format(value);
 
-    // Always place cursor at the end for simplicity
     return TextEditingValue(
       text: formatted,
       selection: TextSelection.collapsed(offset: formatted.length),
@@ -56,31 +51,26 @@ class _PaymentScreenState extends State<PaymentScreen> {
   final TextEditingController amountController = TextEditingController();
   bool _isHovered = false;
   bool _isPressed = false;
-  String _displayAmount = "0.00"; // Default value
+  String _displayAmount = "0.00";
   bool _isProcessingPayment = false;
   
-  // Firebase instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   
-  // Payment gateway variables
   final TextEditingController cardNumberController = TextEditingController();
   final TextEditingController cardNameController = TextEditingController();
   final TextEditingController expiryController = TextEditingController();
   final TextEditingController cvvController = TextEditingController();
   bool isPaymentLoading = false;
 
-  // User data
   String? _nic;
   String? _userId;
   String? _accountNumber;
   String? _customerId;
   Map<String, dynamic>? _installmentData;
   
-  // Available balance
   double _availableBalance = 0;
   double _currentMonthInstallment = 0;
 
-  // Stream subscription
   StreamSubscription<DocumentSnapshot>? _installmentSubscription;
 
   @override
@@ -90,10 +80,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
     _loadUserData();
   }
 
-  // Load user data from secure storage
   Future<void> _loadUserData() async {
     try {
-      // Get NIC from secure storage
       _nic = await SecureStorageService.getUserNic();
       
       if (_nic == null || _nic!.isEmpty) {
@@ -103,7 +91,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       
       debugPrint('Found NIC: $_nic');
       
-      // Find user in customers collection using NIC
       final customerSnapshot = await _firestore
           .collection('customers')
           .where('nic', isEqualTo: _nic)
@@ -115,11 +102,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
         return;
       }
       
-      // Get customer ID (document ID)
       _customerId = customerSnapshot.docs[0].id;
       debugPrint('Found customer ID: $_customerId');
       
-      // Find finance document using customer ID
       final financeSnapshot = await _firestore
           .collection('finances')
           .where('customerId', isEqualTo: _customerId)
@@ -131,20 +116,16 @@ class _PaymentScreenState extends State<PaymentScreen> {
         return;
       }
       
-      // Get account number from finance document
       _accountNumber = financeSnapshot.docs[0].data()['accountNumber'];
       debugPrint('Found account number: $_accountNumber');
       
-      // Set user ID (same as customer ID in this case)
       _userId = _customerId;
       
-      // Setup real-time listener for installment data
       if (_accountNumber != null) {
         _setupInstallmentListener();
       }
       
       setState(() {
-        // Update the state with the loaded data
         _userId = _userId;
         _accountNumber = _accountNumber;
         _customerId = _customerId;
@@ -155,7 +136,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
 
-  // Setup real-time listener for installment data
   void _setupInstallmentListener() {
     if (_installmentSubscription != null) {
       _installmentSubscription!.cancel();
@@ -180,15 +160,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
   void _updateBalanceAndAmount() {
     if (_installmentData != null) {
-      // Update available balance
       _availableBalance = _installmentData!['balance'] ?? 0;
       
-      // Get current month's installment amount
       String currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
       double currentMonthAmount = 0;
       bool found = false;
 
-      // Find the current month's installment in arrears
       if (_installmentData!.containsKey('arrears')) {
         for (var arrear in _installmentData!['arrears']) {
           if (arrear['month'].startsWith(currentMonth)) {
@@ -205,30 +182,24 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       }
       
-      // If no current month installment found, use the monthly installment
       if (!found && _installmentData!.containsKey('monthlyInstallment')) {
         currentMonthAmount = _installmentData!['monthlyInstallment'].toDouble();
       }
       
-      // Update current month installment
       _currentMonthInstallment = currentMonthAmount;
     }
   }
 
-  // Load monthly installment amount from shared preferences (synced with dashboard)
   Future<void> _loadMonthlyInstallmentAmount() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final amount = prefs.getString('monthly_installment_amount');
       
       if (amount != null && amount.isNotEmpty) {
-        // Extract numeric value from "LKR X,XXX.XX" format
         String numericValue = amount.replaceAll(RegExp(r'[^0-9.,]'), '');
         
-        // If it's coming from dashboard with LKR prefix, parse it correctly
         if (amount.toLowerCase().contains('lkr')) {
           try {
-            // Clean the value by removing all non-numeric characters except decimal point
             numericValue = amount.replaceAll(RegExp(r'[^0-9.]'), '');
             double parsedAmount = double.parse(numericValue);
             numericValue = NumberFormat('#,##0.00').format(parsedAmount);
@@ -239,13 +210,11 @@ class _PaymentScreenState extends State<PaymentScreen> {
         
         setState(() {
           _displayAmount = numericValue;
-          // DO NOT update the text controller here
         });
         
         debugPrint('Loaded monthly installment amount from shared prefs: $_displayAmount');
       }
     } catch (e) {
-      // Silent error handling for shared preferences
       debugPrint('Error loading monthly installment: $e');
     }
   }
@@ -259,15 +228,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
     expiryController.dispose();
     cvvController.dispose();
     
-    // Cancel subscription to prevent memory leaks
     _installmentSubscription?.cancel();
     
     super.dispose();
   }
 
-  // Process payment when user clicks Pay Now in the gateway
   Future<void> _processPayment(StateSetter setModalState) async {
-    // Validate card information
     if (cardNumberController.text.isEmpty ||
         cardNameController.text.isEmpty ||
         expiryController.text.isEmpty ||
@@ -279,7 +245,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       isPaymentLoading = true;
     });
 
-    // If user data is not loaded yet, try to load it again
     if (_userId == null || _accountNumber == null) {
       await _loadUserData();
       
@@ -291,22 +256,17 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     }
 
-    // Get payment amount
     final cleanPaymentAmount = amountController.text.replaceAll(',', '');
     final paymentAmount = double.tryParse(cleanPaymentAmount) ?? 0;
 
     try {
-      // Record payment in Firebase
       await _recordPaymentInFirebase(paymentAmount);
       
-      // Simulate payment processing with delay
       await Future.delayed(const Duration(seconds: 2));
 
-      // Close the payment gateway
       if (mounted) {
         Navigator.pop(context);
 
-        // Navigate to receipt page
         Navigator.push(
           context,
           MaterialPageRoute(
@@ -327,17 +287,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
     }
   }
   
-  // Record payment in Firebase
   Future<void> _recordPaymentInFirebase(double paymentAmount) async {
     if (_userId == null || _accountNumber == null) {
       throw Exception('User ID or Account Number not found');
     }
     
-    // Get current date in yyyy-MM-dd format
     final now = DateTime.now();
     final paymentDate = DateFormat('yyyy-MM-dd').format(now);
     
-    // Get installment data
     final installmentDoc = await _firestore
         .collection('installments')
         .doc(_accountNumber)
@@ -347,17 +304,14 @@ class _PaymentScreenState extends State<PaymentScreen> {
       throw Exception('Installment data not found for account: $_accountNumber');
     }
     
-    // Get fresh installment data
     final installmentData = installmentDoc.data()!;
     
-    // Calculate remaining balance
     double balance = installmentData['balance'] != null 
         ? (installmentData['balance'] is int 
             ? (installmentData['balance'] as int).toDouble() 
             : installmentData['balance'] as double) 
         : 0.0;
     
-    // Process payment based on current installment status
     List<dynamic> arrears = List.from(installmentData['arrears']);
     List<dynamic> monthlyInstallments = List.from(installmentData['monthlyInstallments']);
     int installmentsPaid = installmentData['installmentsPaid'] ?? 0;
@@ -366,9 +320,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
     double remainingPayment = paymentAmount;
     bool isFullyPaid = false;
     
-    // If payment amount is greater than or equal to the total balance, mark as fully paid
     if (remainingPayment >= balance) {
-      // Mark all arrears as paid
       for (int i = 0; i < arrears.length; i++) {
         if (arrears[i]['status'] == 'pending' ||
             arrears[i]['status'] == 'due' ||
@@ -379,10 +331,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
           arrears[i]['status'] = 'paid';
           arrears[i]['amountPayable'] = 0.0;
           
-          // Update the corresponding monthly installment
           for (int j = 0; j < monthlyInstallments.length; j++) {
             if (monthlyInstallments[j]['month'] == month) {
-              // Use the standard amount for the full payment
               double standardAmount = 
                   arrears[i]['standardAmount'] != null 
                       ? (arrears[i]['standardAmount'] is int 
@@ -400,7 +350,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       }
       
-      // Set values for fully paid loan
       int totalInstallments = installmentsPaid + remainingInstallments;
       installmentsPaid = totalInstallments;
       remainingInstallments = 0;
@@ -409,7 +358,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       
       debugPrint('Loan fully paid off');
     } else {
-      // Process due/overdue/partial installments first
       List<Map<String, dynamic>> dueArrears = [];
       for (int i = 0; i < arrears.length; i++) {
         if (arrears[i]['status'] == 'due' || 
@@ -419,12 +367,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       }
       
-      // Sort by billing date (earliest first)
       dueArrears.sort((a, b) => 
         a['arrear']['billingDate'].compareTo(b['arrear']['billingDate'])
       );
       
-      // Process due/overdue/partial installments
       for (var item in dueArrears) {
         if (remainingPayment <= 0) break;
         
@@ -434,7 +380,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
             : (arrears[idx]['amountPayable'] as double);
         String month = arrears[idx]['month'];
         
-        // Store the standard amount if not already present
         if (!arrears[idx].containsKey('standardAmount')) {
           arrears[idx]['standardAmount'] = amountPayable;
         }
@@ -448,11 +393,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
         debugPrint('Standard amount: $standardAmount');
         
         if (remainingPayment >= amountPayable) {
-          // Fully pay this installment
           arrears[idx]['status'] = 'paid';
           arrears[idx]['amountPayable'] = 0.0;
           
-          // Update the corresponding monthly installment
           for (int j = 0; j < monthlyInstallments.length; j++) {
             if (monthlyInstallments[j]['month'] == month) {
               monthlyInstallments[j]['amountPaid'] = standardAmount;
@@ -469,12 +412,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
           
           debugPrint('Fully paid month: $month, remaining payment: $remainingPayment');
         } else {
-          // Partial payment
           double newAmountPayable = amountPayable - remainingPayment;
           arrears[idx]['amountPayable'] = newAmountPayable;
           arrears[idx]['status'] = 'partial';
           
-          // Update the corresponding monthly installment
           for (int j = 0; j < monthlyInstallments.length; j++) {
             if (monthlyInstallments[j]['month'] == month) {
               double currentPaid = monthlyInstallments[j]['amountPaid'] != null 
@@ -496,11 +437,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
         }
       }
       
-      // If there's still payment amount remaining, apply to pending installments
       if (remainingPayment > 0) {
         debugPrint('Excess payment: $remainingPayment - applying to future payments');
         
-        // Get pending arrears in chronological order
         List<Map<String, dynamic>> pendingArrears = [];
         for (int i = 0; i < arrears.length; i++) {
           if (arrears[i]['status'] == 'pending') {
@@ -512,7 +451,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           a['arrear']['billingDate'].compareTo(b['arrear']['billingDate'])
         );
         
-        // Apply remaining payment to pending arrears
         for (var pendingItem in pendingArrears) {
           if (remainingPayment <= 0) break;
           
@@ -522,7 +460,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
               : (arrears[idx]['amountPayable'] as double);
           String month = arrears[idx]['month'];
           
-          // Store the standard amount if not already present
           if (!arrears[idx].containsKey('standardAmount')) {
             arrears[idx]['standardAmount'] = amountPayable;
           }
@@ -530,11 +467,9 @@ class _PaymentScreenState extends State<PaymentScreen> {
           debugPrint('Processing pending month: $month, amount payable: $amountPayable');
           
           if (remainingPayment >= amountPayable) {
-            // Fully pay this installment
             arrears[idx]['status'] = 'paid';
             arrears[idx]['amountPayable'] = 0.0;
             
-            // Update monthly installment record
             for (int j = 0; j < monthlyInstallments.length; j++) {
               if (monthlyInstallments[j]['month'] == month) {
                 double standardAmount = arrears[idx]['standardAmount'] is int 
@@ -554,12 +489,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
             
             debugPrint('Fully paid pending month: $month, remaining: $remainingPayment');
           } else {
-            // Partial payment for this pending installment
             double newAmountPayable = amountPayable - remainingPayment;
             arrears[idx]['amountPayable'] = newAmountPayable;
-            arrears[idx]['status'] = 'partial'; // Change from pending to partial
+            arrears[idx]['status'] = 'partial';
             
-            // Update monthly installment record
             for (int j = 0; j < monthlyInstallments.length; j++) {
               if (monthlyInstallments[j]['month'] == month) {
                 double currentPaid = monthlyInstallments[j]['amountPaid'] != null 
@@ -581,14 +514,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
           }
         }
         
-        // If there's still remaining payment, reduce the balance
         if (remainingPayment > 0) {
           balance -= remainingPayment;
           debugPrint('Additional balance reduction: $remainingPayment');
         }
       }
       
-      // If balance becomes zero or negative, mark as fully paid
       if (balance <= 0) {
         balance = 0.0;
         remainingInstallments = 0;
@@ -596,7 +527,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
         installmentsPaid = totalInstallments;
         isFullyPaid = true;
         
-        // Mark all remaining arrears as paid
         for (int i = 0; i < arrears.length; i++) {
           if (arrears[i]['status'] != 'paid') {
             arrears[i]['status'] = 'paid';
@@ -625,10 +555,8 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     }
     
-    // Update next due date
     String nextDueDate = installmentData['nextDueDate'];
     if (!isFullyPaid) {
-      // Find the next unpaid installment
       List<dynamic> sortedArrears = List.from(arrears);
       sortedArrears.sort((a, b) => a['billingDate'].compareTo(b['billingDate']));
       
@@ -643,14 +571,12 @@ class _PaymentScreenState extends State<PaymentScreen> {
       }
     }
     
-    // Ensure balance is not negative
     if (balance < 0) balance = 0.0;
     
     debugPrint('New balance: $balance');
     debugPrint('Installments paid: $installmentsPaid, Remaining: $remainingInstallments');
     debugPrint('New next due date: $nextDueDate');
     
-    // Update Firestore
     await _firestore.collection('installments').doc(_accountNumber).update({
       'arrears': arrears,
       'monthlyInstallments': monthlyInstallments,
@@ -663,21 +589,19 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'lastUpdated': FieldValue.serverTimestamp()
     });
     
-    // Add payment record
     await _firestore.collection('payments').add({
       'userId': _userId,
-      'customerId': _customerId, // Add customer ID
+      'customerId': _customerId,
       'accountNumber': _accountNumber,
       'amount': paymentAmount,
       'paymentDate': paymentDate,
       'paymentMethod': 'card',
       'cardHolderName': cardNameController.text,
-      'cardNumber': cardNumberController.text.substring(cardNumberController.text.length - 4),  // Store only last 4 digits
+      'cardNumber': cardNumberController.text.substring(cardNumberController.text.length - 4),
       'createdAt': FieldValue.serverTimestamp(),
       'paymentType': isFullyPaid ? 'full' : 'regular',
     });
     
-    // Update the local installment data
     _installmentData = {
       ...installmentData,
       'arrears': arrears,
@@ -690,7 +614,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
       'lastPaymentAmount': paymentAmount,
     };
     
-    // Update balance variable for UI
     setState(() {
       _availableBalance = balance;
     });
@@ -716,7 +639,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
             ),
             child: Column(
               children: [
-                // PayHere header - only showing logo now
                 Container(
                   padding: const EdgeInsets.symmetric(vertical: 15),
                     decoration: const BoxDecoration(
@@ -736,7 +658,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                 ),
                 
-                // Payment details
                 Expanded(
                   child: SingleChildScrollView(
                     child: Padding(
@@ -746,7 +667,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         children: [
                           const SizedBox(height: 5),
                           
-                          // Order summary
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.all(15),
@@ -786,7 +706,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           
                           const SizedBox(height: 28),
                           
-                          // Card payment section
                           const Text(
                             'Pay with Card',
                             style: TextStyle(
@@ -796,7 +715,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           ),
                           const SizedBox(height: 20),
                           
-                          // Card logos
                           Row(
                             children: [
                               Image.asset(
@@ -818,7 +736,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           
                           const SizedBox(height: 28),
                           
-                          // Card Number
                           _buildPaymentField(
                             controller: cardNumberController,
                             label: 'Card Number',
@@ -833,7 +750,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           
                           const SizedBox(height: 15),
                           
-                          // Card Holder Name
                           _buildPaymentField(
                             controller: cardNameController,
                             label: 'Card Holder Name',
@@ -842,7 +758,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           
                           const SizedBox(height: 15),
                           
-                          // Expiry and CVV in a row
                           Row(
                             children: [
                               Expanded(
@@ -868,7 +783,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                   obscureText: true,
                                   inputFormatters: [
                                     FilteringTextInputFormatter.digitsOnly,
-                                    LengthLimitingTextInputFormatter(3), // Restrict to 3 digits for CVV
+                                    LengthLimitingTextInputFormatter(3),
                                   ],
                                 ),
                               ),
@@ -877,7 +792,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           
                           const SizedBox(height: 30),
                           
-                          // Pay button - explicitly set text color to white
                           SizedBox(
                             width: double.infinity,
                             child: ElevatedButton(
@@ -886,7 +800,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                 : () => _processPayment(setModalState),
                               style: ElevatedButton.styleFrom(
                                 backgroundColor: const Color(0xFF2B2D42),
-                                foregroundColor: Colors.white, // Explicitly setting text color
+                                foregroundColor: Colors.white,
                                 padding: const EdgeInsets.symmetric(vertical: 15),
                                 shape: RoundedRectangleBorder(
                                   borderRadius: BorderRadius.circular(8),
@@ -906,7 +820,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                                       style: TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Colors.white, // Ensuring text is white
+                                        color: Colors.white,
                                       ),
                                     ),
                             ),
@@ -914,7 +828,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           
                           const SizedBox(height: 20),
                           
-                          // Security note
                           Center(
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
@@ -936,7 +849,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                             ),
                           ),
 
-                          // Add extra padding at bottom for better scrolling
                           const SizedBox(height: 200),
                         ],
                       ),
@@ -997,13 +909,10 @@ class _PaymentScreenState extends State<PaymentScreen> {
     final t = AppLocalizations.of(context)!;
     final String today = DateFormat('dd - MM - yyyy').format(DateTime.now());
 
-    // Format the balance to display as the monthly installment amount
     String formattedBalance = NumberFormat("#,##0.00").format(_availableBalance);
     
-    // Format the current month installment
     String formattedCurrentMonthAmount = NumberFormat("#,##0.00").format(_currentMonthInstallment);
     
-    // Get current month name for display
     String currentMonthName = DateFormat('MMMM yyyy').format(DateTime.now());
 
     return Scaffold(
@@ -1014,7 +923,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
           children: [
             const SizedBox(height: 46),
     
-            // Custom AppBar
             Stack(
               alignment: Alignment.center,
               children: [
@@ -1047,7 +955,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     
             const SizedBox(height: 30),
     
-            // Top Info Section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Column(
@@ -1095,7 +1002,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     
             const SizedBox(height: 25),
             
-            // Balance information - Now showing available balance
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Container(
@@ -1123,7 +1029,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
 
             const SizedBox(height: 25),
     
-            // Total Amount Payable section
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: Column(
@@ -1138,7 +1043,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   ),
                   const SizedBox(height: 10),
                   
-                  // Current month installment
                   Row(
                     children: [
                       const Icon(
@@ -1161,7 +1065,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                   
                   const SizedBox(height: 25),
                   
-                  // Text field with only LKR showing and no default value in hint
                   Container(
                     decoration: BoxDecoration(
                       borderRadius: BorderRadius.circular(12),
@@ -1175,7 +1078,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         PaymentAmountFormatter(),
                       ],
                       decoration: InputDecoration(
-                        // Removed hint text
                         prefixIcon: const Icon(Icons.attach_money),
                         prefixText: "LKR ",
                         prefixStyle: const TextStyle(
@@ -1184,7 +1086,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         ),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-                        // Show hint text only when field is focused
                         hintStyle: TextStyle(
                           color: Colors.grey.withAlpha((0.5 * 255).toInt()),
                         ),
@@ -1197,7 +1098,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
     
             const SizedBox(height: 30),
     
-            // Pay Button
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 25),
               child: MouseRegion(
@@ -1213,7 +1113,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                         _isProcessingPayment = true;
                       });
                       
-                      // If user data not loaded yet, try to load it first before showing payment gateway
                       if (_userId == null || _accountNumber == null) {
                         _loadUserData().then((_) {
                           if (!mounted) return;
@@ -1223,7 +1122,7 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           });
                           
                           if (_userId != null && _accountNumber != null && mounted) {
-                            // ignore: use_build_context_synchronously
+                            
                             _showPaymentGateway(context);
                           } else {
                             setState(() {
@@ -1232,7 +1131,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
                           }
                         });
                       } else {
-                        // User data is already loaded, show payment gateway
                         setState(() {
                           _isProcessingPayment = false;
                         });
@@ -1294,7 +1192,6 @@ class _PaymentScreenState extends State<PaymentScreen> {
   }
 }
 
-// Card number formatter - Format as "XXXX XXXX XXXX XXXX"
 class CardNumberFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
@@ -1320,7 +1217,6 @@ class CardNumberFormatter extends TextInputFormatter {
   }
 }
 
-// Expiry date formatter - Format as "MM/YY"
 class ExpiryDateFormatter extends TextInputFormatter {
   @override
   TextEditingValue formatEditUpdate(TextEditingValue oldValue, TextEditingValue newValue) {
