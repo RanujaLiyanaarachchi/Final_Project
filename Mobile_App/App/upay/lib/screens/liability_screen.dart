@@ -25,7 +25,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
   bool _isLoading = true;
   String? _error;
 
-  // Liability data
   String firstName = '';
   String customerName = '';
   String vehicleNumber = '';
@@ -41,11 +40,10 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
   String remainingInstallments = '';
   String nic = '';
   bool isFullyPaid = false;
-  
-  // Cache keys
+
   static const String _cacheKey = 'liability_data_cache';
   static const String _cacheDateKey = 'liability_data_cache_date';
-  static const int _cacheValidityHours = 6; // Cache valid for 6 hours
+  static const int _cacheValidityHours = 6;
 
   @override
   void initState() {
@@ -55,15 +53,13 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
 
   Future<void> _loadData() async {
     try {
-      // First try to load from cache
       if (await _loadFromCache()) {
         setState(() {
           _isLoading = false;
         });
         return;
       }
-      
-      // If cache not available or expired, load from network
+
       await _loadLiabilityData();
     } catch (e) {
       setState(() {
@@ -78,26 +74,21 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
       final prefs = await SharedPreferences.getInstance();
       final cachedDataJson = prefs.getString(_cacheKey);
       final cacheDateString = prefs.getString(_cacheDateKey);
-      
-      // Check if cache exists
+
       if (cachedDataJson == null || cacheDateString == null) {
         return false;
       }
-      
-      // Check if cache is still valid (not expired)
+
       final cacheDate = DateTime.parse(cacheDateString);
       final now = DateTime.now();
       final difference = now.difference(cacheDate);
-      
+
       if (difference.inHours > _cacheValidityHours) {
-        // Cache expired
         return false;
       }
-      
-      // Parse cached data
+
       final Map<String, dynamic> cachedData = jsonDecode(cachedDataJson);
-      
-      // Set state from cached data
+
       setState(() {
         firstName = cachedData['firstName'] ?? '';
         customerName = cachedData['customerName'] ?? '';
@@ -115,11 +106,11 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         nic = cachedData['nic'] ?? '';
         isFullyPaid = cachedData['isFullyPaid'] ?? false;
       });
-      
-      debugPrint("DEBUG: Loaded liability data from cache");
+
+      debugPrint("Loaded liability data from cache");
       return true;
     } catch (e) {
-      debugPrint("ERROR: Failed to load from cache: $e");
+      debugPrint("Failed to load from cache: $e");
       return false;
     }
   }
@@ -127,8 +118,7 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
   Future<void> _saveToCache() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      
-      // Create data map
+
       final Map<String, dynamic> cacheData = {
         'firstName': firstName,
         'customerName': customerName,
@@ -146,20 +136,18 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         'nic': nic,
         'isFullyPaid': isFullyPaid,
       };
-      
-      // Save to shared preferences
+
       await prefs.setString(_cacheKey, jsonEncode(cacheData));
       await prefs.setString(_cacheDateKey, DateTime.now().toIso8601String());
-      
-      debugPrint("DEBUG: Saved liability data to cache");
+
+      debugPrint("Saved liability data to cache");
     } catch (e) {
-      debugPrint("ERROR: Failed to save to cache: $e");
+      debugPrint("Failed to save to cache: $e");
     }
   }
 
   Future<void> _loadLiabilityData() async {
     try {
-      // Check if user is authenticated
       final user = _auth.currentUser;
       if (user == null) {
         setState(() {
@@ -169,7 +157,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         return;
       }
 
-      // Get NIC from secure storage instead of shared preferences
       final userNic = await SecureStorageService.getUserNic();
 
       if (userNic == null || userNic.isEmpty) {
@@ -184,11 +171,10 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         nic = userNic;
       });
 
-      debugPrint("DEBUG: Loading liability data for NIC: $nic");
-      debugPrint("DEBUG: User authenticated: ${user.uid}");
+      debugPrint("Loading liability data for NIC: $nic");
+      debugPrint("User authenticated: ${user.uid}");
 
-      // First check if there are any installments with this NIC directly
-      debugPrint("DEBUG: Looking for installments with NIC: $nic");
+      debugPrint("Looking for installments with NIC: $nic");
       final installmentsNicSnapshot =
           await _firestore
               .collection('installments')
@@ -199,15 +185,12 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         final accountNo =
             installmentsNicSnapshot.docs.first.data()['accountNumber'];
         if (accountNo != null) {
-          debugPrint(
-            "DEBUG: Found installments with account number: $accountNo",
-          );
+          debugPrint("Found installments with account number: $accountNo");
           await _loadDataByAccountNumber(accountNo.toString());
           return;
         }
       }
 
-      // Next, try to get customer info to get customerId
       debugPrint("DEBUG: Looking up customer with NIC: $nic");
       final customersSnapshot =
           await _firestore
@@ -225,7 +208,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
             customerData['id'] ??
             customersSnapshot.docs.first.id;
 
-        // Try multiple fields for customer name
         customerName =
             customerData['fullName'] ??
             customerData['name'] ??
@@ -233,11 +215,8 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
             'Not Available';
 
         firstName = customerName;
-        debugPrint(
-          "DEBUG: Found customer with ID: $customerId, name: $customerName",
-        );
+        debugPrint("Found customer with ID: $customerId, name: $customerName");
       } else {
-        // Try alternative NIC format
         if (nic.length == 10) {
           String alternativeNic =
               nic.endsWith('v')
@@ -245,7 +224,7 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                   : (nic.endsWith('V') ? '${nic.substring(0, 9)}v' : nic);
 
           if (alternativeNic != nic) {
-            debugPrint("DEBUG: Trying alternative NIC format: $alternativeNic");
+            debugPrint("Trying alternative NIC format: $alternativeNic");
             final altSnapshot =
                 await _firestore
                     .collection('customers')
@@ -260,7 +239,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                   customerData['id'] ??
                   altSnapshot.docs.first.id;
 
-              // Try multiple fields for customer name
               customerName =
                   customerData['fullName'] ??
                   customerData['name'] ??
@@ -268,15 +246,14 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                   'Not Available';
 
               firstName = customerName;
-              debugPrint("DEBUG: Found customer with alt NIC, ID: $customerId");
+              debugPrint("Found customer with alt NIC, ID: $customerId");
             }
           }
         }
       }
 
       if (customerId.isNotEmpty) {
-        // Look for finances with this customer ID
-        debugPrint("DEBUG: Looking for finances with customerId: $customerId");
+        debugPrint("Looking for finances with customerId: $customerId");
         final financesSnapshot =
             await _firestore
                 .collection('finances')
@@ -284,12 +261,10 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                 .get();
 
         if (financesSnapshot.docs.isNotEmpty) {
-          debugPrint(
-            "DEBUG: Found ${financesSnapshot.docs.length} finance records",
-          );
+          debugPrint("Found ${financesSnapshot.docs.length} finance records");
           final accountNo = financesSnapshot.docs.first.data()['accountNumber'];
           if (accountNo != null) {
-            debugPrint("DEBUG: Found account number: $accountNo");
+            debugPrint("Found account number: $accountNo");
             await _loadDataByAccountNumber(accountNo.toString());
             return;
           }
@@ -301,7 +276,7 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         _error = 'No liability data found for your account.';
       });
     } catch (e) {
-      debugPrint("ERROR: Failed to load liability data: $e");
+      debugPrint("Failed to load liability data: $e");
 
       String errorMessage = 'Error loading liability data';
       if (e.toString().contains('permission-denied')) {
@@ -318,7 +293,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
 
   Future<void> _loadDataByAccountNumber(String accountNo) async {
     try {
-      // Get finance data
       final financeQuery =
           await _firestore
               .collection('finances')
@@ -334,7 +308,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         return;
       }
 
-      // Get installments data - first try document ID approach
       final installmentDocRef = _firestore
           .collection('installments')
           .doc(accountNo);
@@ -342,7 +315,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
 
       List<QueryDocumentSnapshot> installmentDocs = [];
 
-      // If document not found, try query approach
       if (!installmentDoc.exists) {
         final installmentsQuery =
             await _firestore
@@ -355,7 +327,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         }
       }
 
-      // Get customer data if name not yet retrieved
       if (firstName.isEmpty || customerName.isEmpty) {
         final customerId = financeQuery.docs.first.data()['customerId'];
         if (customerId != null) {
@@ -365,7 +336,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           if (customerQuery.exists) {
             final customerData = customerQuery.data();
             if (customerData != null) {
-              // Try multiple fields for customer name
               customerName =
                   customerData['fullName'] ??
                   customerData['name'] ??
@@ -373,13 +343,12 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                   'Not Available';
 
               firstName = customerName;
-              debugPrint("DEBUG: Found customer name: $customerName");
+              debugPrint("Found customer name: $customerName");
             }
           }
         }
       }
 
-      // Check if payment is fully paid
       final customerId = financeQuery.docs.first.data()['customerId'];
       final paymentsQuery =
           await _firestore
@@ -400,24 +369,21 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         }
       }
 
-      // Process finance data
       _processFinanceData(financeQuery.docs.first, isFullyPaid);
 
-      // Process installments if available
       if (installmentDoc.exists) {
         _processInstallmentDocData(installmentDoc, isFullyPaid);
       } else if (installmentDocs.isNotEmpty) {
         _processInstallmentData(installmentDocs, isFullyPaid);
       }
-      
-      // Save data to cache for next time
+
       await _saveToCache();
-      
+
       setState(() {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint("ERROR: Failed to load data by account number: $e");
+      debugPrint("Failed to load data by account number: $e");
       setState(() {
         _isLoading = false;
         _error = 'Error loading finance details: ${e.toString()}';
@@ -429,23 +395,17 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
     try {
       final data = doc.data() as Map<String, dynamic>;
 
-      // Format currency values
       final currencyFormatter = NumberFormat.currency(
         symbol: 'LKR ',
         decimalDigits: 2,
       );
 
-      // Format date values
       final dateFormatter = DateFormat('dd - MM - yyyy');
 
-      // Extract data from finances collection
       setState(() {
-        // Set fully paid status
         this.isFullyPaid = isFullyPaid;
 
-        // Get customer name if not already set
         if (firstName.isEmpty || customerName.isEmpty) {
-          // Try both customerName and fullName fields
           if (data.containsKey('customerName')) {
             firstName = data['customerName'] ?? 'Not Available';
             customerName = firstName;
@@ -455,13 +415,10 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           }
         }
 
-        // Get account number
         accountNumber = data['accountNumber']?.toString() ?? 'Not Available';
 
-        // Get vehicle number
         vehicleNumber = data['vehicleNumber'] ?? 'Not Available';
 
-        // Format loan amount
         if (data.containsKey('loanAmount')) {
           final rawAmount = data['loanAmount'];
           if (rawAmount is num) {
@@ -471,7 +428,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           }
         }
 
-        // Format opening date
         if (data.containsKey('openingDate')) {
           final rawDate = data['openingDate'];
           if (rawDate is Timestamp) {
@@ -488,7 +444,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           }
         }
 
-        // Format interest rate
         if (data.containsKey('interestRate')) {
           final rawRate = data['interestRate'];
           if (rawRate is num) {
@@ -498,7 +453,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           }
         }
 
-        // Format maturity date - For fully paid loans, display 'None'
         if (isFullyPaid) {
           maturityDate = 'None';
         } else if (data.containsKey('maturityDate')) {
@@ -517,7 +471,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           }
         }
 
-        // Get monthly installment amount - For fully paid loans, display 'LKR 0.00'
         if (isFullyPaid) {
           nextInstallmentAmount = currencyFormatter.format(0);
         } else if (data.containsKey('monthlyInstallment')) {
@@ -530,7 +483,7 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         }
       });
     } catch (e) {
-      debugPrint("ERROR: Failed to process finance data: $e");
+      debugPrint("Failed to process finance data: $e");
       setState(() {
         _isLoading = false;
         _error = 'Error processing finance data: ${e.toString()}';
@@ -542,17 +495,14 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
     try {
       final data = doc.data() as Map<String, dynamic>;
 
-      // Format currency values
       final currencyFormatter = NumberFormat.currency(
         symbol: 'LKR ',
         decimalDigits: 2,
       );
 
-      // Format date values
       final dateFormatter = DateFormat('dd - MM - yyyy');
 
       setState(() {
-        // Format balance - Use the balance field from installments collection
         if (isFullyPaid) {
           balance = currencyFormatter.format(0);
           maturityDate = 'None';
@@ -568,7 +518,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           balance = 'Not Available';
         }
 
-        // Get remaining installments directly from installments collection
         if (isFullyPaid) {
           remainingInstallments = "0";
         } else if (data.containsKey('remainingInstallments')) {
@@ -583,12 +532,10 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           remainingInstallments = 'Not Available';
         }
 
-        // Get next installment date
         if (isFullyPaid) {
           nextInstallmentDate = 'None';
           totalArrears = currencyFormatter.format(0);
         } else {
-          // Check for nextDueDate
           if (data.containsKey('nextDueDate')) {
             final rawDate = data['nextDueDate'];
             if (rawDate is String) {
@@ -605,7 +552,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
             }
           }
 
-          // Calculate arrears with special handling for current month
           num totalArrearAmount = 0;
           if (data.containsKey('arrears')) {
             final arrears = data['arrears'] as List<dynamic>?;
@@ -614,7 +560,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
               final currentMonthYear =
                   "${now.year}-${now.month.toString().padLeft(2, '0')}";
 
-              // First check if current month is already paid
               bool isCurrentMonthPaid = false;
 
               for (var arrear in arrears) {
@@ -630,7 +575,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                 }
               }
 
-              // Count due/overdue items
               for (var arrear in arrears) {
                 if (arrear is Map) {
                   String month = (arrear['month'] ?? '').toString();
@@ -638,10 +582,8 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                       (arrear['status'] ?? '').toString().toLowerCase();
                   String billingDate = (arrear['billingDate'] ?? '').toString();
 
-                  // Check for past due items (previous months or current month already due)
                   if (status == 'due' || status == 'overdue') {
                     try {
-                      // If we can parse the billing date, check if it's in the past
                       final dueDate = DateTime.parse(billingDate);
                       if (dueDate.isBefore(now)) {
                         final amount = arrear['amountPayable'];
@@ -650,8 +592,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                         }
                       }
                     } catch (_) {
-                      // If date parsing fails, use month comparison
-                      // For previous months or current month (if not paid)
                       if (month.compareTo(currentMonthYear) < 0 ||
                           (month == currentMonthYear && !isCurrentMonthPaid)) {
                         final amount = arrear['amountPayable'];
@@ -672,7 +612,7 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint("ERROR: Failed to process installment doc: $e");
+      debugPrint("Failed to process installment doc: $e");
       setState(() {
         _isLoading = false;
       });
@@ -684,10 +624,8 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
     bool isFullyPaid,
   ) {
     try {
-      // Format date values
       final dateFormatter = DateFormat('dd - MM - yyyy');
 
-      // Format currency values
       final currencyFormatter = NumberFormat.currency(
         symbol: 'LKR ',
         decimalDigits: 2,
@@ -706,11 +644,9 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         return;
       }
 
-      // Get data from first doc for balance and remaining installments
       if (docs.isNotEmpty) {
         final firstDoc = docs.first.data() as Map<String, dynamic>;
 
-        // Get balance
         if (firstDoc.containsKey('balance')) {
           final rawBalance = firstDoc['balance'];
           if (rawBalance is num) {
@@ -720,24 +656,20 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
           }
         }
 
-        // Get remaining installments
         if (firstDoc.containsKey('remainingInstallments')) {
           remainingInstallments =
               firstDoc['remainingInstallments']?.toString() ?? 'Not Available';
         }
 
-        // Check for arrears in the first document with live month checking
         if (firstDoc.containsKey('arrears')) {
           num totalArrearAmount = 0;
           final arrears = firstDoc['arrears'] as List<dynamic>?;
 
           if (arrears != null) {
-            // Get current month and date info
             final now = DateTime.now();
             final currentMonthYear =
                 "${now.year}-${now.month.toString().padLeft(2, '0')}";
 
-            // First check if current month is already paid
             bool isCurrentMonthPaid = false;
             for (var arrear in arrears) {
               if (arrear is Map) {
@@ -752,7 +684,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
               }
             }
 
-            // Count due/overdue items
             for (var arrear in arrears) {
               if (arrear is Map) {
                 String month = (arrear['month'] ?? '').toString();
@@ -760,7 +691,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                     (arrear['status'] ?? '').toString().toLowerCase();
                 String billingDate = (arrear['billingDate'] ?? '').toString();
 
-                // Only include due or overdue items that are past their billing date
                 if (status == 'due' || status == 'overdue') {
                   try {
                     final dueDate = DateTime.parse(billingDate);
@@ -771,7 +701,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                       }
                     }
                   } catch (_) {
-                    // If date parsing fails, use month comparison
                     if (month.compareTo(currentMonthYear) < 0 ||
                         (month == currentMonthYear && !isCurrentMonthPaid)) {
                       final amount = arrear['amountPayable'];
@@ -784,12 +713,10 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
               }
             }
 
-            // Set total arrears
             totalArrears = currencyFormatter.format(totalArrearAmount);
           }
         }
 
-        // Get next due date
         if (firstDoc.containsKey('nextDueDate')) {
           final rawDate = firstDoc['nextDueDate'];
           if (rawDate is String) {
@@ -803,14 +730,12 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
             nextInstallmentDate = dateFormatter.format(rawDate.toDate());
           }
         } else {
-          // If nextDueDate not found directly, check arrears for future dates
           if (firstDoc.containsKey('arrears')) {
             final arrears = firstDoc['arrears'] as List<dynamic>?;
             if (arrears != null) {
               final now = DateTime.now();
               DateTime? nextDate;
 
-              // Find the next upcoming due date
               for (var arrear in arrears) {
                 if (arrear is Map &&
                     (arrear['status'] == 'due' ||
@@ -818,7 +743,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                   if (arrear.containsKey('billingDate')) {
                     try {
                       final dueDate = DateTime.parse(arrear['billingDate']);
-                      // If date is in the future and sooner than any we've found
                       if (dueDate.isAfter(now) &&
                           (nextDate == null || dueDate.isBefore(nextDate))) {
                         nextDate = dueDate;
@@ -828,7 +752,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                 }
               }
 
-              // Format the next date if found
               if (nextDate != null) {
                 nextInstallmentDate = dateFormatter.format(nextDate);
               }
@@ -837,12 +760,10 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         }
       }
 
-      // If we haven't set the next installment date yet, try from individual docs
       if (nextInstallmentDate.isEmpty ||
           nextInstallmentDate == 'Not Available') {
         final now = DateTime.now();
 
-        // Sort docs by billing date
         final datedDocs =
             docs.where((doc) {
               final data = doc.data() as Map<String, dynamic>;
@@ -860,7 +781,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
             return aDate.compareTo(bDate);
           });
 
-          // Find first future date
           DateTime? nextDate;
           for (final doc in datedDocs) {
             final data = doc.data() as Map<String, dynamic>;
@@ -883,7 +803,7 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
         _isLoading = false;
       });
     } catch (e) {
-      debugPrint("ERROR: Failed to process installments: $e");
+      debugPrint("Failed to process installments: $e");
       setState(() {
         _isLoading = false;
       });
@@ -898,7 +818,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
   }) async {
     final pdf = pw.Document();
 
-    // Load custom fonts
     final sinhalaFont = pw.Font.ttf(
       await rootBundle.load('assets/fonts/pdf/Iskoola Pota Regular.ttf'),
     );
@@ -906,7 +825,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
       await rootBundle.load('assets/fonts/pdf/NotoSansTamil-Regular.ttf'),
     );
 
-    // Select fonts based on locale
     late pw.Font? primaryFont;
     List<pw.Font> fallbackFonts = [];
 
@@ -917,11 +835,10 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
       primaryFont = tamilFont;
       fallbackFonts = [sinhalaFont];
     } else {
-      primaryFont = null; // Use default font for English
+      primaryFont = null;
       fallbackFonts = [sinhalaFont, tamilFont];
     }
 
-    // Load logo
     final logoImage = await imageFromAssetBundle(
       'assets/images/liability/letterhead.png',
     );
@@ -1039,7 +956,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                   ),
                   pw.SizedBox(height: 8),
 
-                  // Add loan fully paid section if applicable
                   if (isFullyPaid) pw.SizedBox(height: 30),
                   if (isFullyPaid)
                     pw.Container(
@@ -1130,7 +1046,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
     );
   }
 
-  // Force refresh data
   void _refreshData() {
     setState(() {
       _isLoading = true;
@@ -1165,7 +1080,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
       body: Column(
         children: [
           const SizedBox(height: 80),
-          // Custom AppBar
           Stack(
             alignment: Alignment.center,
             children: [
@@ -1201,10 +1115,7 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
                     onTap: _refreshData,
                     child: const Padding(
                       padding: EdgeInsets.all(10.0),
-                      child: Icon(
-                        Icons.refresh,
-                        color: Colors.black54,
-                      ),
+                      child: Icon(Icons.refresh, color: Colors.black54),
                     ),
                   ),
                 ),
@@ -1265,7 +1176,6 @@ class _LiabilityScreenState extends State<LiabilityScreen> {
             Expanded(
               child: Column(
                 children: [
-                  // Fixed Top Section
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: Column(
