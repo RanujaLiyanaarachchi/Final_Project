@@ -46,9 +46,11 @@ UPay is a comprehensive mobile payment application built with Flutter, designed 
     - Phone number: 0760620019
     - OTP: 123456
 
+## Important Testing Information
+
     <https://github.com/RanujaLiyanaarachchi/Final_Project/tree/cd5907b1fb2733638173315f792e590eb5d61ede/Desktop_App>
 
-## Important Testing Information
+
 
     You can use your real phone number and enter the received OTP during authentication. You can also sign in with your real NIC number after adding your personal data through the admin panel.
 
