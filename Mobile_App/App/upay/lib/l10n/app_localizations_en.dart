@@ -66,7 +66,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get forgot_password_title => 'Forgot?';
 
   @override
-  String get enter_email_reset => 'Dont worry! It occurs. Please enter the email address linked with your account';
+  String get enter_email_reset => 'Don\'t worry! It occurs. Please enter the email address linked with your account';
 
   @override
   String get send => 'Send';

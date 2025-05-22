@@ -214,7 +214,7 @@ abstract class AppLocalizations {
   /// Prompt for email input to reset password
   ///
   /// In en, this message translates to:
-  /// **'Dont worry! It occurs. Please enter the email address linked with your account'**
+  /// **'Don\'t worry! It occurs. Please enter the email address linked with your account'**
   String get enter_email_reset;
 
   /// Send button label
