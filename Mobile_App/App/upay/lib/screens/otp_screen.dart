@@ -30,16 +30,13 @@ class OtpScreen extends StatefulWidget {
 }
 
 class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
-  // Controllers
   final TextEditingController _otpController = TextEditingController();
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // Auto-fill stream controller for OTP
   final StreamController<ErrorAnimationType> _errorController =
       StreamController<ErrorAnimationType>();
 
-  // State flags - minimizing state variables for better performance
   bool _isLoading = false;
   bool _isResending = false;
   bool _isVerifyingNic = false;
@@ -49,16 +46,13 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
   bool _isKeyboardVisible = false;
   String? _errorText;
 
-  // Timer for countdown
   Timer? _timer;
-  int _remainingTime = 60; // seconds
+  int _remainingTime = 60;
 
-  // Memoized phone number formatter - compute once for reuse
   late final String _displayPhoneNumber = _formatDisplayPhoneNumber(
     widget.phoneNumber,
   );
 
-  // Pre-defined colors for better performance
   static final _redTextColor = Colors.red.shade700;
 
   String _formatDisplayPhoneNumber(String phone) {
@@ -73,7 +67,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
 
-    // If we already have a credential (auto-verification), use it
     if (widget.credential != null) {
       _signInWithCredential(widget.credential!);
     } else {
@@ -83,7 +76,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // Only update state if necessary
     if (state == AppLifecycleState.resumed && _isLoading) {
       setState(() => _isLoading = false);
     }
@@ -104,14 +96,12 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
   }
 
   Future<void> _verifyOtp() async {
-    // Dismiss keyboard when verify button is pressed
     FocusScope.of(context).unfocus();
 
     setState(() {
       _submitted = true;
     });
 
-    // Quick validation before proceeding
     if (_otpController.text.length != 6) {
       setState(() {
         _errorText =
@@ -127,7 +117,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
     });
 
     try {
-      // Create credential with verification ID and OTP
       final PhoneAuthCredential credential = PhoneAuthProvider.credential(
         verificationId: widget.verificationId,
         smsCode: _otpController.text,
@@ -138,12 +127,10 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
-        // Display user-friendly message for wrong OTP
         _errorText =
             AppLocalizations.of(context)?.enter_correct_otp ??
             'Enter correct OTP code';
 
-        // Trigger error animation in PIN field
         _errorController.add(ErrorAnimationType.shake);
       });
     } catch (e) {
@@ -161,7 +148,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
     try {
       await _auth.signInWithCredential(credential);
 
-      // Save user login information
       await AuthService.saveUserLogin(
         nic: widget.nic,
         phone: widget.phoneNumber,
@@ -169,14 +155,12 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
 
       if (!mounted) return;
 
-      // Now verify if the NIC exists in the database
       _verifyNicAndNavigate();
     } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
 
-        // Show user-friendly message for invalid verification code
         if (e.code == 'invalid-verification-code') {
           _errorText =
               AppLocalizations.of(context)?.enter_correct_otp ??
@@ -205,18 +189,15 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
     });
 
     try {
-      // Check if NIC exists in customers collection
       final QuerySnapshot result =
           await FirebaseFirestore.instance
               .collection('customers')
               .where('nic', isEqualTo: widget.nic)
               .get();
 
-      // Try alternative NIC format if not found (optimized for fewer string operations)
       bool isNicValid = result.docs.isNotEmpty;
 
       if (!isNicValid && widget.nic.length == 10) {
-        // Only compute alternative NIC if needed
         String? alternativeNic;
         final lastChar = widget.nic[9];
 
@@ -237,7 +218,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
         }
       }
 
-      // Try case-insensitive search as a last resort
       if (!isNicValid) {
         final allDocs =
             await FirebaseFirestore.instance
@@ -315,7 +295,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
           });
           _startTimer();
 
-          // Only show snackbar if mounted
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(
@@ -344,7 +323,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    // Clean up resources to prevent memory leaks
     WidgetsBinding.instance.removeObserver(this);
     _otpController.dispose();
     _timer?.cancel();
@@ -354,23 +332,19 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
 
   @override
   Widget build(BuildContext context) {
-    // Calculate dimensions once for reuse
     final size = MediaQuery.of(context).size;
     final horizontalPadding = size.width < 600 ? 40.0 : 50.0;
     final imageHeight = size.width < 600 ? 265.0 : 280.0;
 
-    // Check if keyboard is visible
     final viewInsets = MediaQuery.of(context).viewInsets;
     _isKeyboardVisible = viewInsets.bottom > 0;
 
-    // Prepare colors - reused from sign in page
     final borderColor = Colors.blue.shade100;
     final buttonStartColor = Colors.blue.shade300;
     final buttonEndColor = Colors.blue.shade500;
     final buttonPressedStartColor = Colors.blue.shade800;
     final buttonPressedEndColor = Colors.blue.shade900;
 
-    // Circle bubble color (same as sign in page)
     const circleColor = Color.fromRGBO(59, 130, 246, 0.07);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -380,7 +354,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
       ),
       child: Scaffold(
         backgroundColor: const Color(0xFFFEFEFF),
-        // This preserves the bottom bubble position when keyboard opens
         resizeToAvoidBottomInset: false,
         body: Container(
           width: double.infinity,
@@ -395,7 +368,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
           child: SafeArea(
             child: Stack(
               children: [
-                // Decorative circle bubbles (same as sign in page)
                 Positioned(
                   top: -size.width * 0.24,
                   right: -size.width * 0.24,
@@ -421,12 +393,10 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                   ),
                 ),
 
-                // Main content
                 Form(
                   key: _formKey,
                   child: Column(
                     children: [
-                      // Custom header with back button
                       Padding(
                         padding: EdgeInsets.only(
                           top: 60.0,
@@ -436,7 +406,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                         child: Stack(
                           alignment: Alignment.center,
                           children: [
-                            // Centered title
                             Align(
                               alignment: Alignment.center,
                               child: Text(
@@ -452,7 +421,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                                 ),
                               ),
                             ),
-                            // Back button aligned to the left with custom animation
                             Positioned(
                               left: -10,
                               child: GestureDetector(
@@ -498,10 +466,8 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.center,
                             children: [
-                              // Exactly 100px spacing when keyboard is visible
                               SizedBox(height: _isKeyboardVisible ? 100 : 60),
 
-                              // Only show image when keyboard is not visible
                               if (!_isKeyboardVisible)
                                 Image.asset(
                                   'assets/images/otp/otp.png',
@@ -515,7 +481,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                                   },
                                 ),
 
-                              // Always show verification code title and phone text
                               SizedBox(height: _isKeyboardVisible ? 10 : 20),
                               Text(
                                 AppLocalizations.of(
@@ -539,7 +504,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                               SizedBox(height: _isKeyboardVisible ? 25 : 0),
                               const SizedBox(height: 30),
 
-                              // OTP Input field with design similar to sign in fields
                               Padding(
                                 padding: const EdgeInsets.symmetric(
                                   horizontal: 5,
@@ -569,7 +533,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                                   enableActiveFill: false,
                                   enabled: !_isLoading && !_isVerifyingNic,
                                   onChanged: (value) {
-                                    // Hide error messages when typing
                                     if (_errorText != null || _submitted) {
                                       setState(() {
                                         _errorText = null;
@@ -577,7 +540,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                                       });
                                     }
 
-                                    // Auto-submit when 6 digits are entered
                                     if (value.length == 6 &&
                                         !_isLoading &&
                                         !_isVerifyingNic) {
@@ -585,7 +547,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                                     }
                                   },
                                   onTap: () {
-                                    // Hide error messages when tapping the input field
                                     if (_errorText != null || _submitted) {
                                       setState(() {
                                         _errorText = null;
@@ -604,7 +565,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
 
                               const SizedBox(height: 30),
 
-                              // Verify Button - styled like the sign in button
                               GestureDetector(
                                 onTapDown:
                                     (_) => setState(() => _isPressed = true),
@@ -716,7 +676,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
 
                               const SizedBox(height: 20),
 
-                              // Resend code option
                               Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
@@ -770,7 +729,6 @@ class _OtpScreenState extends State<OtpScreen> with WidgetsBindingObserver {
                         ),
                       ),
 
-                      // Error messages - only show when keyboard is hidden
                       if (_submitted &&
                           !_isKeyboardVisible &&
                           _errorText != null)
