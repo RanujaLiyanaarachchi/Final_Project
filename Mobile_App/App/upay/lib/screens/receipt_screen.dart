@@ -13,10 +13,10 @@ class ReceiptScreen extends StatefulWidget {
   final String? amount;
   final String? accountNumber;
   final String? customerName;
-  final bool fromPayment; // Flag to indicate if coming from payment screen
-  
+  final bool fromPayment;
+
   const ReceiptScreen({
-    super.key, 
+    super.key,
     this.amount,
     this.accountNumber,
     this.customerName,
@@ -32,11 +32,9 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
   String _accountNumber = "";
   String _customerName = "";
   bool _isLoading = true;
-  
-  // Firebase instance
+
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
-  // Formatter for consistent currency display
+
   final currencyFormatter = NumberFormat.currency(
     symbol: 'LKR ',
     decimalDigits: 2,
@@ -51,89 +49,92 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
   Future<void> _loadPaymentDetails() async {
     try {
       debugPrint("Loading payment details...");
-      
-      // Priority 1: Get amount directly from widget parameter (passed from payment screen)
-      if (widget.amount != null && widget.amount!.isNotEmpty && widget.amount != "0.00") {
+
+      if (widget.amount != null &&
+          widget.amount!.isNotEmpty &&
+          widget.amount != "0.00") {
         try {
-          // Try to parse and format the amount for consistency
           double amountValue = double.parse(widget.amount!.replaceAll(',', ''));
           _amount = currencyFormatter.format(amountValue).trim();
-          _amount = _amount.replaceAll('LKR', 'LKR ').trim(); // Ensure space after currency
+          _amount = _amount.replaceAll('LKR', 'LKR ').trim();
         } catch (e) {
-          // If parsing fails, use the raw value
           _amount = widget.amount!;
         }
         debugPrint("Using amount from widget parameter: $_amount");
       } else {
-        // Priority 2: Try to get last payment from Firestore (similar to bill_screen)
         final nic = await SecureStorageService.getUserNic();
         if (nic != null && nic.isNotEmpty) {
           debugPrint("Looking up payments with NIC: $nic");
-          
-          // First get the customer ID
-          final customerSnapshot = await _firestore
-              .collection('customers')
-              .where('nic', isEqualTo: nic)
-              .limit(1)
-              .get();
-          
+
+          final customerSnapshot =
+              await _firestore
+                  .collection('customers')
+                  .where('nic', isEqualTo: nic)
+                  .limit(1)
+                  .get();
+
           if (customerSnapshot.docs.isNotEmpty) {
             final customerId = customerSnapshot.docs.first.id;
             debugPrint("Found customer with ID: $customerId");
-            
-            // Get the latest payment for this customer
-            final paymentsSnapshot = await _firestore
-                .collection('payments')
-                .where('customerId', isEqualTo: customerId)
-                .orderBy('createdAt', descending: true)
-                .limit(1)
-                .get();
-            
+
+            final paymentsSnapshot =
+                await _firestore
+                    .collection('payments')
+                    .where('customerId', isEqualTo: customerId)
+                    .orderBy('createdAt', descending: true)
+                    .limit(1)
+                    .get();
+
             if (paymentsSnapshot.docs.isNotEmpty) {
               final payment = paymentsSnapshot.docs.first.data();
-              
-              // Get amount (try multiple possible field names)
-              dynamic amount = payment['paymentAmount'] ?? payment['amount'] ?? 0;
-              
-              // Convert amount to num type
+
+              dynamic amount =
+                  payment['paymentAmount'] ?? payment['amount'] ?? 0;
+
               num paymentAmount;
               if (amount is num) {
                 paymentAmount = amount;
               } else {
                 try {
-                  paymentAmount = num.parse(amount.toString().replaceAll(',', ''));
+                  paymentAmount = num.parse(
+                    amount.toString().replaceAll(',', ''),
+                  );
                 } catch (_) {
                   paymentAmount = 0;
                 }
               }
-              
+
               _amount = currencyFormatter.format(paymentAmount).trim();
               debugPrint("Using amount from Firestore payment: $_amount");
             }
           }
         }
-        
-        // Priority 3: Fall back to shared preferences if Firestore lookup fails
+
         if (_amount == "0.00") {
           final prefs = await SharedPreferences.getInstance();
-          
-          // Try last_payment_amount first (set by payment_screen.dart when processing payment)
+
           String? lastPaymentAmount = prefs.getString('last_payment_amount');
-          if (lastPaymentAmount != null && lastPaymentAmount.isNotEmpty && lastPaymentAmount != "0.00") {
+          if (lastPaymentAmount != null &&
+              lastPaymentAmount.isNotEmpty &&
+              lastPaymentAmount != "0.00") {
             try {
-              // Parse and format for consistency
-              double amountValue = double.parse(lastPaymentAmount.replaceAll(',', ''));
+              double amountValue = double.parse(
+                lastPaymentAmount.replaceAll(',', ''),
+              );
               _amount = currencyFormatter.format(amountValue).trim();
             } catch (e) {
               _amount = lastPaymentAmount;
             }
             debugPrint("Using amount from last_payment_amount: $_amount");
           } else {
-            // Try payment_amount (set when user enters amount in the text field)
             String? paymentAmount = prefs.getString('payment_amount');
-            if (paymentAmount != null && paymentAmount.isNotEmpty && paymentAmount != "0.00") {
+            if (paymentAmount != null &&
+                paymentAmount.isNotEmpty &&
+                paymentAmount != "0.00") {
               try {
-                double amountValue = double.parse(paymentAmount.replaceAll(',', ''));
+                double amountValue = double.parse(
+                  paymentAmount.replaceAll(',', ''),
+                );
                 _amount = currencyFormatter.format(amountValue).trim();
               } catch (e) {
                 _amount = paymentAmount;
@@ -143,97 +144,100 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
           }
         }
       }
-      
-      // Get customer info directly if passed to widget
+
       if (widget.customerName != null && widget.customerName!.isNotEmpty) {
         _customerName = widget.customerName!;
         debugPrint("Using customer name from widget parameter: $_customerName");
       }
-      
+
       if (widget.accountNumber != null && widget.accountNumber!.isNotEmpty) {
         _accountNumber = widget.accountNumber!;
-        debugPrint("Using account number from widget parameter: $_accountNumber");
+        debugPrint(
+          "Using account number from widget parameter: $_accountNumber",
+        );
       }
-      
-      // If customer info not passed directly, try to get from secure storage & Firestore
+
       if (_customerName.isEmpty || _accountNumber.isEmpty) {
-        // Get NIC from secure storage
         final nic = await SecureStorageService.getUserNic();
         debugPrint("Retrieved NIC from secure storage: $nic");
-        
+
         if (nic != null && nic.isNotEmpty) {
-          // Find user in customers collection using NIC
           debugPrint("Looking up customer with NIC: $nic");
-          final customerSnapshot = await _firestore
-              .collection('customers')
-              .where('nic', isEqualTo: nic)
-              .limit(1)
-              .get();
-          
+          final customerSnapshot =
+              await _firestore
+                  .collection('customers')
+                  .where('nic', isEqualTo: nic)
+                  .limit(1)
+                  .get();
+
           if (customerSnapshot.docs.isNotEmpty) {
             final customerDoc = customerSnapshot.docs.first;
             final customerId = customerDoc.id;
             debugPrint("Found customer with ID: $customerId");
-            
-            // Get customer name
+
             if (_customerName.isEmpty) {
-              // Try with firstName + lastName fields first
               String firstName = customerDoc.data()['firstName'] ?? '';
               String lastName = customerDoc.data()['lastName'] ?? '';
               _customerName = '$firstName $lastName'.trim();
-              
-              // If still empty, try with name field
+
               if (_customerName.isEmpty) {
                 _customerName = customerDoc.data()['name'] ?? '';
               }
-              
-              // If still empty, try with fullName field
+
               if (_customerName.isEmpty) {
                 _customerName = customerDoc.data()['fullName'] ?? 'Unknown';
               }
-              
+
               debugPrint("Set customer name to: $_customerName");
             }
-            
-            // Get account number if not already set
+
             if (_accountNumber.isEmpty) {
-              debugPrint("Looking up finance records for customer ID: $customerId");
-              final financeSnapshot = await _firestore
-                  .collection('finances')
-                  .where('customerId', isEqualTo: customerId)
-                  .limit(1)
-                  .get();
-              
+              debugPrint(
+                "Looking up finance records for customer ID: $customerId",
+              );
+              final financeSnapshot =
+                  await _firestore
+                      .collection('finances')
+                      .where('customerId', isEqualTo: customerId)
+                      .limit(1)
+                      .get();
+
               if (financeSnapshot.docs.isNotEmpty) {
-                _accountNumber = financeSnapshot.docs.first.data()['accountNumber'] ?? '';
+                _accountNumber =
+                    financeSnapshot.docs.first.data()['accountNumber'] ?? '';
                 debugPrint("Found account number: $_accountNumber");
               }
             }
-            
-            // If still no payment amount, check payments directly for this customer
+
             if (_amount == "0.00") {
-              final paymentsSnapshot = await _firestore
-                  .collection('payments')
-                  .where('customerId', isEqualTo: customerId)
-                  .orderBy('createdAt', descending: true)
-                  .limit(1)
-                  .get();
-                  
+              final paymentsSnapshot =
+                  await _firestore
+                      .collection('payments')
+                      .where('customerId', isEqualTo: customerId)
+                      .orderBy('createdAt', descending: true)
+                      .limit(1)
+                      .get();
+
               if (paymentsSnapshot.docs.isNotEmpty) {
                 final payment = paymentsSnapshot.docs.first.data();
-                dynamic amount = payment['paymentAmount'] ?? payment['amount'] ?? 0;
-                
+                dynamic amount =
+                    payment['paymentAmount'] ?? payment['amount'] ?? 0;
+
                 if (amount is num) {
                   _amount = currencyFormatter.format(amount).trim();
                   debugPrint("Using amount from payments collection: $_amount");
                 } else if (amount is String && amount.isNotEmpty) {
                   try {
-                    double amountValue = double.parse(amount.replaceAll(',', ''));
+                    double amountValue = double.parse(
+                      amount.replaceAll(',', ''),
+                    );
                     _amount = currencyFormatter.format(amountValue).trim();
                   } catch (e) {
                     _amount = amount;
                   }
-                  debugPrint("Using string amount from payments collection: $_amount");
+                  debugPrint(
+                    "Using string amount from payments collection: $_amount",
+                  );
                 }
               }
             }
@@ -243,39 +247,38 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
         } else {
           debugPrint("NIC not found in secure storage");
         }
-        
-        // If still not found, try shared preferences as fallback
+
         if (_customerName.isEmpty || _accountNumber.isEmpty) {
           debugPrint("Using fallback from shared preferences");
           final prefs = await SharedPreferences.getInstance();
-          
+
           if (_customerName.isEmpty) {
             _customerName = prefs.getString('customer_name') ?? 'Unknown';
             debugPrint("Set customer name from shared prefs: $_customerName");
           }
-          
+
           if (_accountNumber.isEmpty) {
             _accountNumber = prefs.getString('account_number') ?? 'Unknown';
             debugPrint("Set account number from shared prefs: $_accountNumber");
           }
         }
       }
-      
-      // Ensure amount has proper formatting if not already formatted
+
       if (!_amount.startsWith('LKR') && _amount != "0.00") {
         try {
           double amountValue = double.parse(_amount.replaceAll(',', ''));
           _amount = currencyFormatter.format(amountValue).trim();
-          _amount = _amount.replaceAll('LKR', 'LKR ').trim(); // Ensure space after currency
+          _amount =
+              _amount
+                  .replaceAll('LKR', 'LKR ')
+                  .trim(); // Ensure space after currency
           debugPrint("Formatted amount: $_amount");
         } catch (e) {
           debugPrint("Error formatting amount: $e");
         }
       }
-      
-      // Final check - if amount is still 0.00, try to use a hardcoded value as last resort
+
       if (_amount == "0.00" || _amount.isEmpty) {
-        // This should only happen if all attempts to get the amount failed
         final prefs = await SharedPreferences.getInstance();
         final savedAmount = prefs.getString('payment_amount');
         if (savedAmount != null && savedAmount.isNotEmpty) {
@@ -286,18 +289,18 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
             _amount = savedAmount;
           }
         } else {
-          // Use the standard monthly amount from bill_screen if available
-          final standardMonthlyAmount = prefs.getString('monthly_installment_amount');
-          if (standardMonthlyAmount != null && standardMonthlyAmount.isNotEmpty) {
+          final standardMonthlyAmount = prefs.getString(
+            'monthly_installment_amount',
+          );
+          if (standardMonthlyAmount != null &&
+              standardMonthlyAmount.isNotEmpty) {
             _amount = standardMonthlyAmount.trim();
           } else {
-            // Last resort - use a hardcoded amount
-            _amount = "LKR 9,890.00";
+            _amount = "LKR 0,000.00";
           }
         }
         debugPrint("Using fallback amount: $_amount");
       }
-      
     } catch (e) {
       debugPrint('Error in _loadPaymentDetails: $e');
     } finally {
@@ -305,7 +308,9 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
         setState(() {
           _isLoading = false;
         });
-        debugPrint("Finished loading payment details: amount=$_amount, name=$_customerName, account=$_accountNumber");
+        debugPrint(
+          "Finished loading payment details: amount=$_amount, name=$_customerName, account=$_accountNumber",
+        );
       }
     }
   }
@@ -317,135 +322,161 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
     return Scaffold(
       backgroundColor: Colors.white,
       body: SafeArea(
-        child: _isLoading 
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 30),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-                Container(
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFEAF8F0),
-                    shape: BoxShape.circle,
-                  ),
-                  padding: const EdgeInsets.all(14),
-                  child: const Icon(Icons.check, color: Color(0xFF4CAF50), size: 36),
-                ),
-                const SizedBox(height: 20),
-                Text(
-                  t.payment_success_title,
-                  style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  t.payment_success_subtitle,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(color: Colors.grey),
-                ),
-                const SizedBox(height: 30),
-
-                // Payment Details Card
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF8F8F8),
-                    borderRadius: BorderRadius.circular(16),
-                    border: Border.all(color: Colors.grey.shade300),
+        child:
+            _isLoading
+                ? const Center(child: CircularProgressIndicator())
+                : SingleChildScrollView(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 25,
+                    vertical: 30,
                   ),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+                    crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
+                      const SizedBox(height: 20),
                       Container(
-                        alignment: Alignment.center,
-                        padding: const EdgeInsets.symmetric(vertical: 6),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(12),
+                        decoration: const BoxDecoration(
+                          color: Color(0xFFEAF8F0),
+                          shape: BoxShape.circle,
                         ),
-                        child: Text(
-                          t.payment_details,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                        padding: const EdgeInsets.all(14),
+                        child: const Icon(
+                          Icons.check,
+                          color: Color(0xFF4CAF50),
+                          size: 36,
                         ),
                       ),
                       const SizedBox(height: 20),
+                      Text(
+                        t.payment_success_title,
+                        style: const TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        t.payment_success_subtitle,
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: Colors.grey),
+                      ),
+                      const SizedBox(height: 30),
 
-                      _infoRow(t.amount, _amount.startsWith("LKR") ? _amount : "LKR $_amount"),
-                      const SizedBox(height: 12),
-                      _infoRow(t.payment_status, t.success,
-                          isSuccess: true),
-                      const SizedBox(height: 12),
-                      _infoRow(t.name, _customerName),
-                      const SizedBox(height: 12),
-                      _infoRow(t.account_number, _accountNumber),
-                      const SizedBox(height: 12),
-                      _infoRow(t.sender, "Unicon Finance"),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(
+                          vertical: 16,
+                          horizontal: 20,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8F8F8),
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade300),
+                        ),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Container(
+                              alignment: Alignment.center,
+                              padding: const EdgeInsets.symmetric(vertical: 6),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                t.payment_details,
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+
+                            _infoRow(
+                              t.amount,
+                              _amount.startsWith("LKR")
+                                  ? _amount
+                                  : "LKR $_amount",
+                            ),
+                            const SizedBox(height: 12),
+                            _infoRow(
+                              t.payment_status,
+                              t.success,
+                              isSuccess: true,
+                            ),
+                            const SizedBox(height: 12),
+                            _infoRow(t.name, _customerName),
+                            const SizedBox(height: 12),
+                            _infoRow(t.account_number, _accountNumber),
+                            const SizedBox(height: 12),
+                            _infoRow(t.sender, "Unicon Finance"),
+                          ],
+                        ),
+                      ),
+
+                      const SizedBox(height: 30),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: OutlinedButton.icon(
+                          onPressed: () => _generateAndDownloadPdf(context),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            side: const BorderSide(color: Color(0xFF5DA2D5)),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          icon: const Icon(
+                            Icons.download,
+                            color: Color(0xFF5DA2D5),
+                          ),
+                          label: Text(
+                            t.get_pdf_receipt,
+                            style: const TextStyle(
+                              color: Color(0xFF5DA2D5),
+                              fontWeight: FontWeight.w600,
+                            ),
+                          ),
+                        ),
+                      ),
+
+                      const SizedBox(height: 15),
+
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: () {
+                            Navigator.pushAndRemoveUntil(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => const DashboardScreen(),
+                              ),
+                              (_) => false,
+                            );
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF5DA2D5),
+                            padding: const EdgeInsets.symmetric(vertical: 14),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child: Text(
+                            t.done,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ),
-
-                const SizedBox(height: 30),
-
-                // Download PDF Receipt Button
-                SizedBox(
-                  width: double.infinity,
-                  child: OutlinedButton.icon(
-                    onPressed: () => _generateAndDownloadPdf(context),
-                    style: OutlinedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      side: const BorderSide(color: Color(0xFF5DA2D5)),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    icon: const Icon(Icons.download, color: Color(0xFF5DA2D5)),
-                    label: Text(
-                      t.get_pdf_receipt,
-                      style: const TextStyle(
-                        color: Color(0xFF5DA2D5),
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: 15),
-
-                // Done Button
-                SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(builder: (_) => const DashboardScreen()),
-                        (_) => false,
-                      );
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF5DA2D5),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: Text(
-                      t.done,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
+      ),
+    );
   }
 
   Widget _infoRow(String label, String value, {bool isSuccess = false}) {
@@ -455,22 +486,19 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
         Text(label, style: const TextStyle(fontWeight: FontWeight.w500)),
         isSuccess
             ? Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFDFF5E3),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Row(
-                  children: const [
-                    Icon(Icons.check_circle, size: 16, color: Color(0xFF4CAF50)),
-                    SizedBox(width: 5),
-                    Text(
-                      "Success",
-                      style: TextStyle(color: Color(0xFF4CAF50)),
-                    ),
-                  ],
-                ),
-              )
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+              decoration: BoxDecoration(
+                color: const Color(0xFFDFF5E3),
+                borderRadius: BorderRadius.circular(20),
+              ),
+              child: Row(
+                children: const [
+                  Icon(Icons.check_circle, size: 16, color: Color(0xFF4CAF50)),
+                  SizedBox(width: 5),
+                  Text("Success", style: TextStyle(color: Color(0xFF4CAF50))),
+                ],
+              ),
+            )
             : Text(value, style: const TextStyle(fontWeight: FontWeight.w600)),
       ],
     );
@@ -481,7 +509,6 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
 
     final pdf = pw.Document();
 
-    // Format the amount for PDF display
     String pdfAmount = _amount;
     if (!pdfAmount.startsWith("LKR")) {
       pdfAmount = "LKR $pdfAmount";
@@ -495,7 +522,13 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
             child: pw.Column(
               crossAxisAlignment: pw.CrossAxisAlignment.start,
               children: [
-                pw.Text(t.payment_success_title, style: pw.TextStyle(fontSize: 22, fontWeight: pw.FontWeight.bold)),
+                pw.Text(
+                  t.payment_success_title,
+                  style: pw.TextStyle(
+                    fontSize: 22,
+                    fontWeight: pw.FontWeight.bold,
+                  ),
+                ),
                 pw.SizedBox(height: 10),
                 pw.Text(t.payment_success_subtitle),
                 pw.Divider(height: 30),
@@ -505,8 +538,12 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
                 pw.Text('${t.account_number}: $_accountNumber'),
                 pw.Text('${t.sender}: Unicon Finance'),
                 pw.SizedBox(height: 30),
-                pw.Text('Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}'),
-                pw.Text('Receipt ID: PAY-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}'),
+                pw.Text(
+                  'Date: ${DateFormat('dd/MM/yyyy').format(DateTime.now())}',
+                ),
+                pw.Text(
+                  'Receipt ID: PAY-${DateTime.now().millisecondsSinceEpoch.toString().substring(5)}',
+                ),
               ],
             ),
           );
