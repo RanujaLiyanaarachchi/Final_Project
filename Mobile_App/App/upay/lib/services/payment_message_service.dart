@@ -70,7 +70,7 @@ class PaymentMessagesService {
       final installmentDocs = await _firestore.collection('installments').get();
 
       debugPrint(
-        '📋 Found ${installmentDocs.docs.length} installment accounts to monitor',
+        'Found ${installmentDocs.docs.length} installment accounts to monitor',
       );
 
       for (final doc in installmentDocs.docs) {
@@ -1520,7 +1520,7 @@ class PaymentMessagesInitializer {
               .get();
 
       if (!doc.exists || doc.data() == null) {
-        debugPrint('❌ Account $accountNumber not found');
+        debugPrint('Account $accountNumber not found');
         return false;
       }
 
