@@ -1,19 +1,13 @@
 {
   "@@locale": "ta",
   "app_name": "UPay",
-
   "hiThere": "வணக்கம்,",
   "welcome_to_UPay": "UPayக்கு வருக",
   "welcome_message": "உங்கள் செலவுகளை எளிதாக நிர்வகிக்கவும்",
   "lets_begin": "ஆரம்பிக்கலாம்",
-
-
   "sign_in": "நுழை",
   "nic": "ஐடி எண்",
   "phone_number": "தொலைபேசி",
-
-
-
   "email": "மின்னஞ்சல்",
   "password": "கடவுச்சொல்",
   "forgot_password": "கடவுச்சொல்லை மறந்துவிட்டீர்களா?",
@@ -40,7 +34,6 @@
   "total_payable": "மொத்த செலுத்த வேண்டிய தொகை",
   "payable_amount": "செலுத்த வேண்டிய தொகை",
   "account_number": "கணக்கு எண்",
-
   "amount": "தொகை",
   "next": "அடுத்தது",
   "payment_gateway": "கட்டண நுழைவாயில்",
@@ -168,7 +161,6 @@
   "nic_verification": "சரிபார்ப்பு",
   "enter_nic": "NIC ஐ உள்ளிடவும்",
   "nic_verification_message": "ஐடி எண்ணைச் சரிபார்க்கவும்",
-
   "customer_id": "வாடிக்கையாளர் ஐடி",
   "minutes_ago": "நிமிடங்களுக்கு முன்",
   "hours_ago": "மணிநேரங்களுக்கு முன்",
@@ -245,7 +237,6 @@
   "confirm_clean": "விரும்புகிறேன்",
   "support": "ஆதரவு",
   "copied": "நகல்",
-  
   "opening_with_viewer": "பார்வையாளருடன் திறக்கிறது",
   "opening_remote_file": "தொலைநிலை கோப்பைத் திறக்கிறது",
   "fileservices": "கோப்பு சேவைகள்",
