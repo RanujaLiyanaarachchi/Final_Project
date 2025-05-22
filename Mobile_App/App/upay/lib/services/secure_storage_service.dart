@@ -45,7 +45,7 @@ class SecureStorageService {
     try {
       String? encryptionKey = await _secureStorage.read(key: _encryptionKeyKey);
 
-      if (encryptionKey == null || encryptionKey.isEmpty) {
+      if (encryptionKey.isEmpty) {
         final key = encrypt.Key.fromSecureRandom(32).base64;
         await _secureStorage.write(key: _encryptionKeyKey, value: key);
       }

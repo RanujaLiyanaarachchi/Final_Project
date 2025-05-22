@@ -114,8 +114,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
           final prefs = await SharedPreferences.getInstance();
 
           String? lastPaymentAmount = prefs.getString('last_payment_amount');
-          if (lastPaymentAmount != null &&
-              lastPaymentAmount.isNotEmpty &&
+          if (lastPaymentAmount.isNotEmpty &&
               lastPaymentAmount != "0.00") {
             try {
               double amountValue = double.parse(
@@ -128,8 +127,7 @@ class _ReceiptScreenState extends State<ReceiptScreen> {
             debugPrint("Using amount from last_payment_amount: $_amount");
           } else {
             String? paymentAmount = prefs.getString('payment_amount');
-            if (paymentAmount != null &&
-                paymentAmount.isNotEmpty &&
+            if (paymentAmount.isNotEmpty &&
                 paymentAmount != "0.00") {
               try {
                 double amountValue = double.parse(
