@@ -23,13 +23,12 @@ class SettingsScreen extends StatefulWidget {
   SettingsScreenState createState() => SettingsScreenState();
 }
 
-class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveClientMixin {
-  // Enable AutomaticKeepAliveClientMixin to prevent rebuilding when navigating
+class SettingsScreenState extends State<SettingsScreen>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
-  
+
   String _selectedLanguage = "English";
-  // No more loading state - we'll show content instantly with defaults
   String _userName = "Your Name";
   String _customerId = "Customer ID";
   String? _profileImageUrl;
@@ -37,24 +36,20 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
   bool _isUploadingImage = false;
   String? _nic;
 
-  // Cache for validated URLs to avoid repeated failed requests
   final Map<String, bool> _invalidUrls = {};
 
-  // Language mapping for selection dropdown
   final Map<String, String> languageMap = {
     "English": "en",
     "සිංහල": "si",
     "தமிழ்": "ta",
   };
 
-  // Stream subscriptions for real-time updates
   StreamSubscription? _userProfileSubscription;
 
   @override
   void initState() {
     super.initState();
 
-    // Set status bar to match background color
     SystemChrome.setSystemUIOverlayStyle(
       const SystemUiOverlayStyle(
         statusBarColor: Color(0xFFFEF7FF),
@@ -62,62 +57,59 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
       ),
     );
 
-    // Begin loading everything in parallel
     _loadInitialData();
-    
-    // Set up real-time updates for user profile
+
     _setupUserProfileStream();
   }
 
   @override
   void dispose() {
-    // Cancel stream subscriptions to prevent memory leaks
     _userProfileSubscription?.cancel();
     super.dispose();
   }
 
-  // Set up real-time listener for user profile updates
   Future<void> _setupUserProfileStream() async {
     try {
       _nic = await SecureStorageService.getUserNic();
-      
+
       if (_nic != null && _nic!.isNotEmpty) {
-        // Listen to customer document changes
         _userProfileSubscription = FirebaseFirestore.instance
             .collection('customers')
             .where('nic', isEqualTo: _nic)
             .limit(1)
             .snapshots()
             .listen((snapshot) {
-          if (snapshot.docs.isNotEmpty && mounted) {
-            final data = snapshot.docs.first.data();
-            
-            // Extract user details
-            String name = _extractName(data);
-            String customerId = data['customerId'] ?? data['customerID'] ?? data['customerNo'] ?? _nic ?? _customerId;
-            String? profileImage = _extractProfileImage(data);
-            
-            setState(() {
-              if (name.isNotEmpty) _userName = name;
-              _customerId = customerId;
-              if (profileImage != null && 
-                  profileImage.isNotEmpty && 
-                  !_invalidUrls.containsKey(profileImage)) {
-                _profileImageUrl = profileImage;
+              if (snapshot.docs.isNotEmpty && mounted) {
+                final data = snapshot.docs.first.data();
+
+                String name = _extractName(data);
+                String customerId =
+                    data['customerId'] ??
+                    data['customerID'] ??
+                    data['customerNo'] ??
+                    _nic ??
+                    _customerId;
+                String? profileImage = _extractProfileImage(data);
+
+                setState(() {
+                  if (name.isNotEmpty) _userName = name;
+                  _customerId = customerId;
+                  if (profileImage != null &&
+                      profileImage.isNotEmpty &&
+                      !_invalidUrls.containsKey(profileImage)) {
+                    _profileImageUrl = profileImage;
+                  }
+                });
               }
             });
-          }
-        });
       }
     } catch (e) {
       debugPrint("Error setting up profile stream: $e");
     }
   }
 
-  // Load all initial data in parallel
   Future<void> _loadInitialData() async {
     try {
-      // Load all data in parallel for faster startup
       await Future.wait([
         _loadSettings(),
         _loadLanguagePreference(),
@@ -128,7 +120,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Load app settings from shared preferences
   Future<void> _loadSettings() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -142,7 +133,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Save app settings to shared preferences
   Future<void> _saveSettings(String key, bool value) async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -152,18 +142,15 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Load user data from multiple sources
   Future<void> _loadUserData() async {
     if (!mounted) return;
 
     try {
-      // Try loading user data from different sources in parallel
       await Future.wait([
         _loadUserDataFromAuth(),
         _loadUserDataFromFirebaseAuth(''),
       ]);
 
-      // Try to get more data from Firestore using NIC
       _nic = await SecureStorageService.getUserNic();
       String userId = FirebaseAuth.instance.currentUser?.uid ?? '';
 
@@ -171,14 +158,12 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         await _loadUserDataFromFirestore(_nic!, userId);
       }
 
-      // Use Firebase Auth as a fallback
       await _loadUserDataFromFirebaseAuth(userId);
     } catch (e) {
       debugPrint("Error in _loadUserData: $e");
     }
   }
 
-  // Load user data from AuthService
   Future<void> _loadUserDataFromAuth() async {
     try {
       final userData = await AuthService.getUserData();
@@ -193,7 +178,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
           _customerId =
               userData['customerId'] ?? userData['nic'] ?? _customerId;
 
-          // Check for profile image URL but verify it's not empty
           String? imageUrl;
           if (userData.containsKey('profileImage') &&
               userData['profileImage'] != null &&
@@ -209,7 +193,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
             imageUrl = userData['photoURL'];
           }
 
-          // Only set the URL if it's not already identified as invalid
           if (imageUrl != null && !_invalidUrls.containsKey(imageUrl)) {
             _profileImageUrl = imageUrl;
           }
@@ -220,52 +203,48 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Load user data from Firestore
   Future<void> _loadUserDataFromFirestore(String nic, String userId) async {
     try {
-      // Initialize customerId with a default value from class member
       String customerId = _customerId;
 
-      // Try with exact NIC first (with shorter timeout)
-      QuerySnapshot snapshot = await FirebaseFirestore.instance
-          .collection('customers')
-          .where('nic', isEqualTo: nic)
-          .limit(1)
-          .get();
+      QuerySnapshot snapshot =
+          await FirebaseFirestore.instance
+              .collection('customers')
+              .where('nic', isEqualTo: nic)
+              .limit(1)
+              .get();
 
-      // If no results, try with lowercase/uppercase 'v'/'V' at the end
       if (snapshot.docs.isEmpty && nic.length == 10) {
         if (nic.endsWith('v')) {
           final upperNic = '${nic.substring(0, 9)}V';
-          snapshot = await FirebaseFirestore.instance
-              .collection('customers')
-              .where('nic', isEqualTo: upperNic)
-              .limit(1)
-              .get();
+          snapshot =
+              await FirebaseFirestore.instance
+                  .collection('customers')
+                  .where('nic', isEqualTo: upperNic)
+                  .limit(1)
+                  .get();
         } else if (nic.endsWith('V')) {
           final lowerNic = '${nic.substring(0, 9)}v';
-          snapshot = await FirebaseFirestore.instance
-              .collection('customers')
-              .where('nic', isEqualTo: lowerNic)
-              .limit(1)
-              .get();
+          snapshot =
+              await FirebaseFirestore.instance
+                  .collection('customers')
+                  .where('nic', isEqualTo: lowerNic)
+                  .limit(1)
+                  .get();
         }
       }
 
       if (snapshot.docs.isNotEmpty && mounted) {
         final data = snapshot.docs.first.data() as Map<String, dynamic>;
 
-        // Extract name from various possible fields
         String name = _extractName(data);
 
-        // Extract customer ID
         customerId =
             data['customerId'] ??
             data['customerID'] ??
             data['customerNo'] ??
             nic;
 
-        // Get user ID if it's in the document
         String? docUserId =
             data['userId'] ?? data['uid'] ?? data['user_id'] ?? '';
 
@@ -273,7 +252,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
           userId = docUserId;
         }
 
-        // Extract profile image URL
         String? profileImage = _extractProfileImage(data);
 
         if (mounted) {
@@ -289,7 +267,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         }
       }
 
-      // If we still don't have a profile image, try to load it from Firebase Storage
       if ((_profileImageUrl == null ||
               _profileImageUrl!.isEmpty ||
               _invalidUrls.containsKey(_profileImageUrl)) &&
@@ -301,7 +278,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Extract name from Firestore data
   String _extractName(Map<String, dynamic> data) {
     if (data.containsKey('fullName') && data['fullName'] != null) {
       return data['fullName'].toString();
@@ -317,7 +293,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     return '';
   }
 
-  // Extract profile image URL from Firestore data
   String? _extractProfileImage(Map<String, dynamic> data) {
     final imageFields = [
       'profileImage',
@@ -343,7 +318,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     return null;
   }
 
-  // Load user data from Firebase Auth
   Future<void> _loadUserDataFromFirebaseAuth(String userId) async {
     try {
       final User? currentUser = FirebaseAuth.instance.currentUser;
@@ -362,7 +336,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
           }
         });
 
-        // Final fallback for profile image loading
         if (_profileImageUrl == null ||
             _profileImageUrl!.isEmpty ||
             _invalidUrls.containsKey(_profileImageUrl)) {
@@ -375,7 +348,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Load profile image from Firebase Storage
   Future<void> _loadProfileImageFromStorage(
     String? nic,
     String userId,
@@ -384,7 +356,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     if (!mounted) return;
 
     try {
-      // Build a list of identifiers to use (prioritizing userId)
       List<String> identifiers = [];
       if (userId.isNotEmpty) identifiers.add(userId);
       if (customerId != "Customer ID" && customerId.isNotEmpty) {
@@ -398,7 +369,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
 
       final storage = FirebaseStorage.instance;
 
-      // Try direct paths first with reduced timeout
       final String? url = await _tryImagePaths(storage, identifiers);
 
       if (url != null && mounted) {
@@ -408,11 +378,10 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         return;
       }
 
-      // If direct paths failed, try listing files
       try {
         final listResult = await storage
             .ref('customer_images')
-            .list(const ListOptions(maxResults: 25)); // Reduced from 50 for better performance
+            .list(const ListOptions(maxResults: 25));
 
         for (final id in identifiers) {
           for (var item in listResult.items) {
@@ -425,9 +394,7 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
                   });
                   return;
                 }
-              } catch (_) {
-                // Continue to next item
-              }
+              } catch (_) {}
             }
           }
         }
@@ -435,14 +402,18 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         debugPrint("Error listing files in storage: $e");
       }
 
-      // Check additional common folders
-      final List<String> folders = ['profiles', 'profile_images', 'avatars', 'users'];
-      
+      final List<String> folders = [
+        'profiles',
+        'profile_images',
+        'avatars',
+        'users',
+      ];
+
       for (int i = 0; i < folders.length && mounted; i++) {
         try {
           final listResult = await storage
               .ref(folders[i])
-              .list(const ListOptions(maxResults: 15)); // Reduced from 30 for better performance
+              .list(const ListOptions(maxResults: 15));
 
           for (final id in identifiers) {
             for (var item in listResult.items) {
@@ -455,29 +426,23 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
                     });
                     return;
                   }
-                } catch (_) {
-                  // Continue to next item
-                }
+                } catch (_) {}
               }
             }
           }
-        } catch (_) {
-          // Continue to next folder
-        }
+        } catch (_) {}
       }
     } catch (e) {
       debugPrint("Error in _loadProfileImageFromStorage: $e");
     }
   }
 
-  // Try multiple image paths in Firebase Storage
   Future<String?> _tryImagePaths(
     FirebaseStorage storage,
     List<String> identifiers,
   ) async {
     final paths = <String>[];
 
-    // Generate paths to try for each identifier
     for (final id in identifiers) {
       paths.addAll([
         'customer_images/customer_$id.jpg',
@@ -489,20 +454,18 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
       ]);
     }
 
-    // Try each path - fewer attempts for better performance
     for (int i = 0; i < paths.length && i < 10; i++) {
       try {
         final ref = storage.ref().child(paths[i]);
         final url = await ref.getDownloadURL();
         return url;
       } catch (e) {
-        // Just continue to the next path
+        debugPrint("Error getting download URL for $paths[i]: $e");
       }
     }
     return null;
   }
 
-  // Pick and upload profile image
   Future<void> _pickAndUploadImage() async {
     if (_isUploadingImage) return;
 
@@ -510,9 +473,9 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
       final ImagePicker picker = ImagePicker();
       final XFile? image = await picker.pickImage(
         source: ImageSource.gallery,
-        maxWidth: 600, // Reduced from 800 for better performance
-        maxHeight: 600, // Reduced from 800 for better performance
-        imageQuality: 70, // Reduced from 80 for better performance
+        maxWidth: 600,
+        maxHeight: 600,
+        imageQuality: 70,
       );
 
       if (image == null) return;
@@ -521,7 +484,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
 
       final File imageFile = File(image.path);
 
-      // Create a better filename based on available identifiers
       String fileIdentifier;
       if (_customerId != "Customer ID" && _customerId.isNotEmpty) {
         fileIdentifier = _customerId;
@@ -540,26 +502,21 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         'customer_images/$filename',
       );
 
-      // Upload the file
       final TaskSnapshot snapshot = await storageRef.putFile(imageFile);
       final String downloadUrl = await snapshot.ref.getDownloadURL();
 
-      // Update the image URL in Firestore
       await _updateFirestoreImage(downloadUrl);
 
-      // Clear any invalid URL entries if we have a new valid URL
       if (_profileImageUrl != null) {
         _invalidUrls.remove(_profileImageUrl);
       }
 
-      // Update local state
       if (mounted) {
         setState(() {
           _profileImageUrl = downloadUrl;
           _isUploadingImage = false;
         });
 
-        // Show success message
         _showSnackBar(
           AppLocalizations.of(context)?.profile_image_updated ??
               'Profile image updated successfully',
@@ -579,14 +536,12 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Show a snackbar message
   void _showSnackBar(String message, Color backgroundColor) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message), backgroundColor: backgroundColor),
     );
   }
 
-  // Update user profile image in Firestore
   Future<void> _updateFirestoreImage(String downloadUrl) async {
     try {
       if (_nic == null || _nic!.isEmpty) {
@@ -594,7 +549,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
       }
 
       if (_nic != null && _nic!.isNotEmpty) {
-        // Try with exact NIC first
         QuerySnapshot customerSnap =
             await FirebaseFirestore.instance
                 .collection('customers')
@@ -602,7 +556,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
                 .limit(1)
                 .get();
 
-        // If no results, try with lowercase/uppercase 'v'/'V' at the end
         if (customerSnap.docs.isEmpty && _nic!.length == 10) {
           if (_nic!.endsWith('v')) {
             final upperNic = '${_nic!.substring(0, 9)}V';
@@ -624,7 +577,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         }
 
         if (customerSnap.docs.isNotEmpty) {
-          // Update with the new URL (all possible field names)
           await customerSnap.docs.first.reference.update({
             'profileImage': downloadUrl,
             'profileImageUrl': downloadUrl,
@@ -632,7 +584,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
             'photoUrl': downloadUrl,
           });
 
-          // Also update Firebase Auth user photo URL
           try {
             final user = FirebaseAuth.instance.currentUser;
             if (user != null) {
@@ -648,7 +599,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Load language preference from shared preferences
   Future<void> _loadLanguagePreference() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -669,7 +619,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Change app language
   Future<void> _changeLanguage(String language) async {
     if (!mounted) return;
 
@@ -691,7 +640,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     }
   }
 
-  // Clean app data
   Future<void> _cleanData() async {
     final t = AppLocalizations.of(context)!;
     final confirm = await _showConfirmationDialog(
@@ -702,7 +650,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     if (!confirm) return;
 
     try {
-      // Get shared preferences instance
       final prefs = await SharedPreferences.getInstance();
       final language = prefs.getString('language');
 
@@ -715,7 +662,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         await prefs.setString('language', language);
       }
 
-      // Clear caches and sign out
       imageCache.clear();
       imageCache.clearLiveImages();
       PaintingBinding.instance.imageCache.clear();
@@ -732,33 +678,27 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
 
       if (mounted) {
         _showSnackBar(t.data_cleaned_restarting, Colors.green);
-        
-        // Use smooth navigation without animation
+
         await Future.delayed(const Duration(seconds: 1));
         if (mounted) {
-          Navigator.of(context).pushNamedAndRemoveUntil(
-            '/', 
-            (route) => false,
-            // Use PageRouteBuilder for smoother transition
-          );
+          Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
         }
       }
     } catch (_) {
-      // Force restart regardless of errors
       if (mounted) {
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     }
   }
 
-  // Show confirmation dialog
   Future<bool> _showConfirmationDialog(String title, String message) async {
     final t = AppLocalizations.of(context)!;
 
     return await showDialog<bool>(
           context: context,
           barrierDismissible: false,
-          builder: (dialogContext) => AlertDialog(
+          builder:
+              (dialogContext) => AlertDialog(
                 title: Text(title),
                 content: Text(message),
                 actions: [
@@ -782,13 +722,14 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         false;
   }
 
-  // Sign out
   Future<void> _signOut(BuildContext context) async {
     final t = AppLocalizations.of(context)!;
 
-    final confirmed = await showDialog<bool>(
+    final confirmed =
+        await showDialog<bool>(
           context: context,
-          builder: (dialogContext) => AlertDialog(
+          builder:
+              (dialogContext) => AlertDialog(
                 title: Text(t.sign_out),
                 content: Text(t.sign_out_confirm_message),
                 actions: [
@@ -816,9 +757,7 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     try {
       await AuthService.signOut();
 
-      // After the async gap, check if both the widget is still mounted and context is valid
       if (mounted && context.mounted) {
-        // Use PageRouteBuilder for smoother transition without animation
         Navigator.of(context).pushAndRemoveUntil(
           PageRouteBuilder(
             pageBuilder: (_, animation1, animation2) => const SignInScreen(),
@@ -837,9 +776,8 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
 
   @override
   Widget build(BuildContext context) {
-    // Required for AutomaticKeepAliveClientMixin
     super.build(context);
-    
+
     final t = AppLocalizations.of(context)!;
 
     return Scaffold(
@@ -847,24 +785,18 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
       body: Column(
         children: [
           const SizedBox(height: 80),
-          // Title
           Text(
             t.settings,
-            style: const TextStyle(
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
+            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 50),
 
-          // Profile Header with Image
           _buildProfileHeader(),
 
-          const SizedBox(height: 28), // Space after profile
-          // Settings options in scrollable area
+          const SizedBox(height: 28),
           Expanded(
             child: SingleChildScrollView(
-              physics: const ClampingScrollPhysics(), // Better physics for low-end devices
+              physics: const ClampingScrollPhysics(),
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -877,12 +809,13 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
                       child: DropdownButton<String>(
                         value: _selectedLanguage,
                         borderRadius: BorderRadius.circular(12),
-                        items: languageMap.keys.map((language) {
-                          return DropdownMenuItem(
-                            value: language,
-                            child: Text(language),
-                          );
-                        }).toList(),
+                        items:
+                            languageMap.keys.map((language) {
+                              return DropdownMenuItem(
+                                value: language,
+                                child: Text(language),
+                              );
+                            }).toList(),
                         onChanged: (newLang) {
                           if (newLang != null) _changeLanguage(newLang);
                         },
@@ -908,24 +841,30 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
                     title: t.app_guide,
                     icon: Icons.help_outline,
                     iconColor: Colors.cyan,
-                    onTap: () => Navigator.of(context).push(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation1, animation2) => const AppGuideScreen(),
-                        transitionDuration: Duration.zero, // No animation for smoother transition
-                      ),
-                    ),
+                    onTap:
+                        () => Navigator.of(context).push(
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation1, animation2) =>
+                                    const AppGuideScreen(),
+                            transitionDuration: Duration.zero,
+                          ),
+                        ),
                   ),
 
                   _buildSettingTile(
                     title: t.about_us,
                     icon: Icons.info,
                     iconColor: Colors.teal,
-                    onTap: () => Navigator.of(context).push(
-                      PageRouteBuilder(
-                        pageBuilder: (context, animation1, animation2) => const AboutUsScreen(),
-                        transitionDuration: Duration.zero, // No animation for smoother transition
-                      ),
-                    ),
+                    onTap:
+                        () => Navigator.of(context).push(
+                          PageRouteBuilder(
+                            pageBuilder:
+                                (context, animation1, animation2) =>
+                                    const AboutUsScreen(),
+                            transitionDuration: Duration.zero,
+                          ),
+                        ),
                   ),
 
                   _buildSettingTile(
@@ -953,7 +892,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     );
   }
 
-  // Build profile header with image
   Widget _buildProfileHeader() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -964,7 +902,7 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withAlpha(13), // 0.05 * 255 ≈ 13
+              color: Colors.black.withAlpha(13),
               blurRadius: 10,
               offset: const Offset(0, 4),
             ),
@@ -984,15 +922,16 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
                       border: Border.all(color: Colors.purpleAccent, width: 2),
                     ),
                     child: ClipOval(
-                      child: _isUploadingImage
-                          ? _buildProgressIndicator(24)
-                          : _profileImageUrl != null
+                      child:
+                          _isUploadingImage
+                              ? _buildProgressIndicator(24)
+                              : _profileImageUrl != null
                               ? _buildProfileImage()
                               : const Icon(
-                                  Icons.person,
-                                  size: 40,
-                                  color: Colors.purple,
-                                ),
+                                Icons.person,
+                                size: 40,
+                                color: Colors.purple,
+                              ),
                     ),
                   ),
                   Positioned(
@@ -1041,7 +980,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     );
   }
 
-  // Build progress indicator for uploads
   Widget _buildProgressIndicator(double size) {
     return Center(
       child: SizedBox(
@@ -1055,7 +993,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     );
   }
 
-  // Build profile image from URL
   Widget _buildProfileImage() {
     if (_profileImageUrl == null || _profileImageUrl!.isEmpty) {
       return const Icon(Icons.person, size: 40, color: Colors.purple);
@@ -1063,13 +1000,10 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
 
     String imageUrl = _profileImageUrl!.trim();
 
-    // Fix common URL issues
     if (!imageUrl.startsWith('http')) {
       if (imageUrl.startsWith('www.')) {
         imageUrl = 'https://$imageUrl';
       } else {
-        // Likely a Firebase Storage URL that failed to load properly
-        // Mark as invalid so we don't try it again
         _invalidUrls[imageUrl] = true;
         return const Icon(Icons.person, size: 40, color: Colors.purple);
       }
@@ -1080,14 +1014,12 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
       fit: BoxFit.cover,
       width: 64,
       height: 64,
-      cacheWidth: 128, // Memory efficient caching
-      cacheHeight: 128, // Memory efficient caching
+      cacheWidth: 128,
+      cacheHeight: 128,
       errorBuilder: (_, __, ___) {
-        // If load fails, mark URL as invalid so we don't try again
         _invalidUrls[imageUrl] = true;
         return const Icon(Icons.person, size: 40, color: Colors.purple);
       },
-      // Simplified loading builder without animation for better performance
       loadingBuilder: (context, child, loadingProgress) {
         if (loadingProgress == null) return child;
         return const Icon(Icons.person, size: 40, color: Colors.purple);
@@ -1095,7 +1027,6 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
     );
   }
 
-  // Build setting tile with consistent style
   Widget _buildSettingTile({
     required String title,
     required IconData icon,
@@ -1111,7 +1042,7 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(10), // 0.04 * 255 ≈ 10
+            color: Colors.black.withAlpha(10),
             blurRadius: 8,
             spreadRadius: 0,
             offset: const Offset(0, 2),
@@ -1130,9 +1061,10 @@ class SettingsScreenState extends State<SettingsScreen> with AutomaticKeepAliveC
                 Container(
                   padding: const EdgeInsets.all(10),
                   decoration: BoxDecoration(
-                    color: isDanger
-                        ? Colors.red.withAlpha(26) // 0.1 * 255 ≈ 26
-                        : iconColor.withAlpha(26), // 0.1 * 255 ≈ 26
+                    color:
+                        isDanger
+                            ? Colors.red.withAlpha(26)
+                            : iconColor.withAlpha(26),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Icon(icon, color: iconColor, size: 22),
