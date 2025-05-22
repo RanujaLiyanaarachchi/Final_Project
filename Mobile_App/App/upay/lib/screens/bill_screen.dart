@@ -18,40 +18,33 @@ class BillScreen extends StatefulWidget {
   State<BillScreen> createState() => _BillScreenState();
 }
 
-class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateMixin {
-  // Firebase instances
+class _BillScreenState extends State<BillScreen>
+    with SingleTickerProviderStateMixin {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
-  // State variables
- // Changed to false to remove initial loading
   String? _error;
   String _nic = '';
   String _accountNumber = '';
   String _customerName = 'Customer';
 
-  // Bill data
   String _totalArrears = 'LKR 0.00';
-  String _standardMonthlyAmount = 'LKR 9,890.00';  // Updated default to match database
+  String _standardMonthlyAmount = 'LKR 0,000.00';
   String _lastPaymentAmount = 'LKR 0.00';
-  String _currentMonthBillDate = '18/06/2025'; // Default date to match dashboard
+  String _currentMonthBillDate = '00/00/0000';
   String _lastPaymentDate = '';
-  
-  // Shared preferences key for syncing with dashboard
-  static const String keyMonthlyInstallmentAmount = 'monthly_installment_amount';
+
+  static const String keyMonthlyInstallmentAmount =
+      'monthly_installment_amount';
   static const String keyMonthlyInstallmentDate = 'monthly_installment_date';
-  
-  // Timer for periodic checks
+
   Timer? _syncTimer;
 
-  // Tab controller
   late TabController _tabController;
-  
-  // Bill list
+
   List<Map<String, dynamic>> _bills = [];
   Map<String, dynamic>? _currentMonthBillData;
-  
-  // Stream subscriptions for real-time updates
+
   StreamSubscription? _installmentsSubscription;
   StreamSubscription? _paymentsSubscription;
 
@@ -59,14 +52,9 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
   void initState() {
     super.initState();
     _tabController = TabController(length: 2, vsync: this);
-    
-    // Load both data sources in parallel for faster startup
-    Future.wait([
-      _loadSharedPreferences(),
-      _loadBillData()
-    ]);
-    
-    // Set up a periodic timer to sync with shared preferences
+
+    Future.wait([_loadSharedPreferences(), _loadBillData()]);
+
     _syncTimer = Timer.periodic(const Duration(seconds: 2), (_) {
       _loadSharedPreferences();
     });
@@ -80,45 +68,44 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
     _syncTimer?.cancel();
     super.dispose();
   }
-  
-  // Load values from shared preferences (synced with dashboard)
+
   Future<void> _loadSharedPreferences() async {
     try {
       final prefs = await SharedPreferences.getInstance();
       final amount = prefs.getString(keyMonthlyInstallmentAmount);
       final date = prefs.getString(keyMonthlyInstallmentDate);
-      
+
       if (mounted) {
         setState(() {
           if (amount != null && amount.isNotEmpty) {
             _standardMonthlyAmount = amount;
           }
-          
+
           if (date != null && date.isNotEmpty) {
             _currentMonthBillDate = date;
           }
         });
       }
     } catch (e) {
-      // Silent error handling for shared preferences
-    }
-  }
-  
-  // Save values to shared preferences (to be synced with dashboard)
-  Future<void> _saveToSharedPreferences() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(keyMonthlyInstallmentAmount, _standardMonthlyAmount);
-      await prefs.setString(keyMonthlyInstallmentDate, _currentMonthBillDate);
-    } catch (e) {
-      // Silent error handling
+      debugPrint('error handling for shared preferences');
     }
   }
 
-  // Load bill data from Firestore
+  Future<void> _saveToSharedPreferences() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString(
+        keyMonthlyInstallmentAmount,
+        _standardMonthlyAmount,
+      );
+      await prefs.setString(keyMonthlyInstallmentDate, _currentMonthBillDate);
+    } catch (e) {
+      debugPrint('error handling');
+    }
+  }
+
   Future<void> _loadBillData() async {
     try {
-      // Check if user is authenticated
       final user = _auth.currentUser;
       if (user == null) {
         setState(() {
@@ -127,7 +114,6 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
         return;
       }
 
-      // Get NIC from secure storage
       final userNic = await SecureStorageService.getUserNic();
       if (userNic == null || userNic.isEmpty) {
         setState(() {
@@ -140,35 +126,36 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
         _nic = userNic;
       });
 
-      // First, try to get customer info to get customerId and name
-      final customersSnapshot = await _firestore
-          .collection('customers')
-          .where('nic', isEqualTo: _nic)
-          .limit(1)
-          .get();
+      final customersSnapshot =
+          await _firestore
+              .collection('customers')
+              .where('nic', isEqualTo: _nic)
+              .limit(1)
+              .get();
 
       String customerId = '';
 
       if (customersSnapshot.docs.isNotEmpty) {
         final customerData = customersSnapshot.docs.first.data();
-        customerId = customerData['customerId'] ?? 
-                    customerData['id'] ?? 
-                    customersSnapshot.docs.first.id;
-        
-        // Get customer name
-        _customerName = customerData['fullName'] ?? 
-                       customerData['name'] ?? 
-                       customerData['customerName'] ?? 
-                       'Customer';
+        customerId =
+            customerData['customerId'] ??
+            customerData['id'] ??
+            customersSnapshot.docs.first.id;
+
+        _customerName =
+            customerData['fullName'] ??
+            customerData['name'] ??
+            customerData['customerName'] ??
+            'Customer';
       }
 
-      // Try to get account number from finances collection
       if (customerId.isNotEmpty) {
-        final financesSnapshot = await _firestore
-            .collection('finances')
-            .where('customerId', isEqualTo: customerId)
-            .limit(1)
-            .get();
+        final financesSnapshot =
+            await _firestore
+                .collection('finances')
+                .where('customerId', isEqualTo: customerId)
+                .limit(1)
+                .get();
 
         if (financesSnapshot.docs.isNotEmpty) {
           final accountNo = financesSnapshot.docs.first.data()['accountNumber'];
@@ -182,15 +169,16 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
           _setEmptyState();
         }
       } else {
-        // Try direct lookup via NIC in installments
-        final installmentsNicSnapshot = await _firestore
-            .collection('installments')
-            .where('nic', isEqualTo: _nic)
-            .limit(1)
-            .get();
+        final installmentsNicSnapshot =
+            await _firestore
+                .collection('installments')
+                .where('nic', isEqualTo: _nic)
+                .limit(1)
+                .get();
 
         if (installmentsNicSnapshot.docs.isNotEmpty) {
-          final accountNo = installmentsNicSnapshot.docs.first.data()['accountNumber'];
+          final accountNo =
+              installmentsNicSnapshot.docs.first.data()['accountNumber'];
           if (accountNo != null) {
             _accountNumber = accountNo.toString();
             _setupRealTimeUpdates(_accountNumber, '');
@@ -206,86 +194,81 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
     }
   }
 
-  // Set up real-time updates using streams
   void _setupRealTimeUpdates(String accountNumber, String customerId) {
-    // Directly fetch current bill data first to ensure we have the latest values
     _fetchCurrentBillData(accountNumber);
-    
-    // Set up real-time updates for installments/bills
+
     _installmentsSubscription = _firestore
         .collection('installments')
         .doc(accountNumber)
         .snapshots()
-        .listen((documentSnapshot) {
-          if (documentSnapshot.exists) {
-            _processInstallmentData(documentSnapshot.data(), accountNumber, customerId);
-          } else {
+        .listen(
+          (documentSnapshot) {
+            if (documentSnapshot.exists) {
+              _processInstallmentData(
+                documentSnapshot.data(),
+                accountNumber,
+                customerId,
+              );
+            } else {
+              _setEmptyState();
+            }
+          },
+          onError: (e) {
             _setEmptyState();
-          }
-        }, onError: (e) {
-          _setEmptyState();
-        });
-        
-    // Set up real-time updates for payments
+          },
+        );
+
     _setupPaymentsListener(accountNumber, customerId);
   }
-  
-  // Fetch current bill data directly to ensure correct values
+
   Future<void> _fetchCurrentBillData(String accountNumber) async {
     try {
-      final doc = await _firestore
-          .collection('installments')
-          .doc(accountNumber)
-          .get();
-          
+      final doc =
+          await _firestore.collection('installments').doc(accountNumber).get();
+
       if (doc.exists && doc.data() != null) {
         final data = doc.data()!;
-        
-        // Format currency
+
         final currencyFormatter = NumberFormat.currency(
           symbol: 'LKR ',
           decimalDigits: 2,
         );
-        
-        // Check for arrears array to get amountPayable
+
         if (data.containsKey('arrears') && data['arrears'] is List) {
           final arrears = data['arrears'] as List;
-          
-          // Focus on current month (2025-06)
+
           for (var arrear in arrears) {
-            if (arrear is Map && arrear.containsKey('month') && arrear['month'] == '2025-06') {
-              // Get amountPayable for the current month
+            if (arrear is Map &&
+                arrear.containsKey('month') &&
+                arrear['month'] == '2025-06') {
               final amountPayable = arrear['amountPayable'] ?? 9890;
-              
-              // Update state with the proper amount
+
               setState(() {
-                _standardMonthlyAmount = currencyFormatter.format(amountPayable);
+                _standardMonthlyAmount = currencyFormatter.format(
+                  amountPayable,
+                );
               });
-              
-              // Save to shared preferences
+
               _saveToSharedPreferences();
-              
+
               break;
             }
           }
         }
       }
     } catch (e) {
-      // Silent error handling
+      debugPrint('error handling');
     }
   }
 
-  // Setup payments listener based on available parameters
   void _setupPaymentsListener(String accountNumber, String customerId) {
     Query paymentsQuery;
-    
-    // Try to set up the most specific query based on available data
+
     if (accountNumber.isNotEmpty) {
-      // Listen to the entire payments collection where accountNumber matches
       paymentsQuery = _firestore
           .collection('payments')
           .where('accountNumber', isEqualTo: accountNumber)
-          .orderBy('createdAt', descending: true) 
+          .orderBy('createdAt', descending: true)
           .limit(20);
     } else if (customerId.isNotEmpty) {
       paymentsQuery = _firestore
@@ -300,30 +283,28 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
           .orderBy('createdAt', descending: true)
           .limit(20);
     }
-    
-    // Listen for payment updates with improved error handling
-    _paymentsSubscription = paymentsQuery.snapshots().listen((querySnapshot) {
-      _processPaymentData(querySnapshot);
-    }, onError: (e) {
-      setState(() {
-        _lastPaymentAmount = 'LKR 0.00';
-        _lastPaymentDate = '';
-      });
-    });
+
+    _paymentsSubscription = paymentsQuery.snapshots().listen(
+      (querySnapshot) {
+        _processPaymentData(querySnapshot);
+      },
+      onError: (e) {
+        setState(() {
+          _lastPaymentAmount = 'LKR 0.00';
+          _lastPaymentDate = '';
+        });
+      },
+    );
   }
 
-  // Set empty state when no bill data is found
   void _setEmptyState() {
     if (!mounted) return;
-    
-    setState(() {
 
+    setState(() {
       _bills = [];
       _currentMonthBillData = null;
-      
-      // Load from shared preferences first - this ensures sync with dashboard
+
       _loadSharedPreferences().then((_) {
-        // Only set defaults if shared preferences didn't have values
         if (_standardMonthlyAmount.isEmpty) {
           _standardMonthlyAmount = 'LKR 0,000.00';
         }
@@ -334,76 +315,76 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
     });
   }
 
-  // Process installment data from snapshot
-  void _processInstallmentData(Map<String, dynamic>? data, String accountNumber, String customerId) {
+  void _processInstallmentData(
+    Map<String, dynamic>? data,
+    String accountNumber,
+    String customerId,
+  ) {
     if (!mounted) return;
-    
+
     try {
-      // Format currency values
       final currencyFormatter = NumberFormat.currency(
         symbol: 'LKR ',
         decimalDigits: 2,
       );
-      
-      // Format date values
+
       final dateFormatter = DateFormat('dd/MM/yyyy');
-      
+
       List<Map<String, dynamic>> bills = [];
       num totalArrearsAmount = 0;
       Map<String, dynamic>? currentMonthBill;
-      
-      if (data != null) {
-        // Get billing day - default to 18th if not specified (to match dashboard)
-        final billingDay = data.containsKey('billingDay') ? 
-                    int.tryParse(data['billingDay'].toString()) ?? 18 : 18;
 
-        // Create the billing date for the current month - using 2025-06 to match dashboard
+      if (data != null) {
+        final billingDay =
+            data.containsKey('billingDay')
+                ? int.tryParse(data['billingDay'].toString()) ?? 18
+                : 18;
+
         final defaultBillingDate = DateTime(2025, 6, billingDay);
-        final formattedDefaultBillingDate = dateFormatter.format(defaultBillingDate);
-        
-        // Fix current month bill date
+        final formattedDefaultBillingDate = dateFormatter.format(
+          defaultBillingDate,
+        );
+
         setState(() {
           _currentMonthBillDate = formattedDefaultBillingDate;
         });
 
-        // Process arrears if available
         if (data.containsKey('arrears')) {
           final arrears = data['arrears'] as List<dynamic>?;
-          
+
           if (arrears != null) {
             final yesterday = DateTime(2025, 6, DateTime.now().day - 1);
-            final currentMonthStr = '2025-06'; // Fixed to match dashboard
-            
-            // Process each arrear/bill
+            final currentMonthStr = '2025-06';
+
             for (var arrear in arrears) {
               if (arrear is Map) {
-                String status = (arrear['status'] ?? '').toString().toLowerCase();
+                String status =
+                    (arrear['status'] ?? '').toString().toLowerCase();
                 String month = (arrear['month'] ?? '').toString();
                 String billingDate = (arrear['billingDate'] ?? '').toString();
-                
-                // Get amountPayable from this specific arrear - crucial for accuracy
-                num amountPayable = (arrear['amountPayable'] ?? 9890) as num; // Updated default
+
+                num amountPayable = (arrear['amountPayable'] ?? 9890) as num;
                 num paidAmount = (arrear['paidAmount'] ?? 0) as num;
                 num remainingAmount = amountPayable - paidAmount;
-                
-                // Add to bills list for detailed view
+
                 DateTime? billDate;
                 try {
                   billDate = DateTime.parse(billingDate);
                 } catch (_) {
-                  // If date parsing fails, create date from month format
                   try {
                     final parts = month.split('-');
                     if (parts.length == 2) {
-                      billDate = DateTime(int.parse(parts[0]), int.parse(parts[1]), billingDay);
+                      billDate = DateTime(
+                        int.parse(parts[0]),
+                        int.parse(parts[1]),
+                        billingDay,
+                      );
                     }
                   } catch (_) {}
                 }
-                
-                // Check if this is current month's bill
+
                 bool isCurrentMonth = month == currentMonthStr;
-                
-                // Only add current month's bill to the bills list
+
                 if (isCurrentMonth) {
                   Map<String, dynamic> billItem = {
                     'month': month,
@@ -414,98 +395,114 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                     'remainingAmount': remainingAmount,
                     'formattedAmount': currencyFormatter.format(amountPayable),
                     'formattedPaid': currencyFormatter.format(paidAmount),
-                    'formattedRemaining': currencyFormatter.format(remainingAmount),
-                    'formattedDate': billDate != null ? dateFormatter.format(billDate) : formattedDefaultBillingDate,
+                    'formattedRemaining': currencyFormatter.format(
+                      remainingAmount,
+                    ),
+                    'formattedDate':
+                        billDate != null
+                            ? dateFormatter.format(billDate)
+                            : formattedDefaultBillingDate,
                     'isPaid': status == 'paid',
-                    'isPartiallyPaid': status == 'partially_paid' || status == 'partial' || (paidAmount > 0 && paidAmount < amountPayable),
-                    'isOverdue': status == 'overdue' || (status == 'due' && billDate != null && billDate.isBefore(yesterday)),
+                    'isPartiallyPaid':
+                        status == 'partially_paid' ||
+                        status == 'partial' ||
+                        (paidAmount > 0 && paidAmount < amountPayable),
+                    'isOverdue':
+                        status == 'overdue' ||
+                        (status == 'due' &&
+                            billDate != null &&
+                            billDate.isBefore(yesterday)),
                     'isCurrentMonth': true,
                   };
-                  
+
                   bills.add(billItem);
                   currentMonthBill = billItem;
-                  
-                  // Update monthly amount in state and preferences from current month bill
-                  // This ensures we're using amountPayable from database (9890)
+
                   setState(() {
-                    _standardMonthlyAmount = currencyFormatter.format(amountPayable);
+                    _standardMonthlyAmount = currencyFormatter.format(
+                      amountPayable,
+                    );
                   });
                   _saveToSharedPreferences();
                 }
-                
-                // Calculate arrears (still include all past due bills for arrears calculation)
-                // Check if it's a past due installment (before current month)
+
                 bool isPastDue = false;
-                
+
                 if (month.contains('-')) {
                   try {
                     final parts = month.split('-');
                     if (parts.length == 2) {
                       final year = int.parse(parts[0]);
                       final monthNum = int.parse(parts[1]);
-                      
-                      // Check if this is a past month (before 2025-06)
+
                       if (year < 2025 || (year == 2025 && monthNum < 6)) {
                         isPastDue = true;
                       }
                     }
                   } catch (_) {}
                 }
-                
-                // If past due and not fully paid, add to arrears total
+
                 if (isPastDue && status != 'paid' && remainingAmount > 0) {
                   totalArrearsAmount += remainingAmount;
                 }
               }
             }
-            
-            // If we didn't find current month bill, create one with the proper amountPayable
+
             if (currentMonthBill == null) {
-              // Use the proper value from database
-              final defaultMonthlyAmount = 9890;
-              
+              final defaultMonthlyAmount = 0000;
+
               currentMonthBill = {
                 'month': currentMonthStr,
-                'status': 'partial', // Match status from database
+                'status': 'partial',
                 'billingDate': defaultBillingDate,
                 'amountPayable': defaultMonthlyAmount,
                 'paidAmount': 0,
                 'remainingAmount': defaultMonthlyAmount,
-                'formattedAmount': currencyFormatter.format(defaultMonthlyAmount),
+                'formattedAmount': currencyFormatter.format(
+                  defaultMonthlyAmount,
+                ),
                 'formattedPaid': currencyFormatter.format(0),
-                'formattedRemaining': currencyFormatter.format(defaultMonthlyAmount),
+                'formattedRemaining': currencyFormatter.format(
+                  defaultMonthlyAmount,
+                ),
                 'formattedDate': formattedDefaultBillingDate,
                 'isPaid': false,
                 'isPartiallyPaid': false,
                 'isOverdue': false,
                 'isCurrentMonth': true,
               };
-              
+
               bills.add(currentMonthBill);
-              
-              // Update state with the proper amount
+
               setState(() {
-                _standardMonthlyAmount = currencyFormatter.format(defaultMonthlyAmount);
+                _standardMonthlyAmount = currencyFormatter.format(
+                  defaultMonthlyAmount,
+                );
               });
               _saveToSharedPreferences();
             }
-            
-            // Update state with the processed data
+
             setState(() {
               _totalArrears = currencyFormatter.format(totalArrearsAmount);
-              _bills = bills; // This will only include current month bill
+              _bills = bills;
 
-              
-              // Set current month bill data
               if (currentMonthBill != null) {
                 _currentMonthBillData = currentMonthBill;
               }
             });
           } else {
-            _handleEmptyArrearsWithStandardAmount(data, currencyFormatter, dateFormatter);
+            _handleEmptyArrearsWithStandardAmount(
+              data,
+              currencyFormatter,
+              dateFormatter,
+            );
           }
         } else {
-          _handleEmptyArrearsWithStandardAmount(data, currencyFormatter, dateFormatter);
+          _handleEmptyArrearsWithStandardAmount(
+            data,
+            currencyFormatter,
+            dateFormatter,
+          );
         }
       } else {
         _setEmptyState();
@@ -515,22 +512,19 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
     }
   }
 
-  // Handle case when there are no arrears but standard amount is available
   void _handleEmptyArrearsWithStandardAmount(
-    Map<String, dynamic> data, 
-    NumberFormat currencyFormatter, 
-    DateFormat dateFormatter
+    Map<String, dynamic> data,
+    NumberFormat currencyFormatter,
+    DateFormat dateFormatter,
   ) {
-    // Use fixed date to match dashboard date
     final billingDate = DateTime(2025, 6, 18);
-    final standardAmount = _parseAmount(data['standardAmount'] ?? 9890); // Updated default to match DB
-    final currentMonthStr = '2025-06'; // Match dashboard date
+    final standardAmount = _parseAmount(data['standardAmount'] ?? 9890);
+    final currentMonthStr = '2025-06';
     final formattedDate = dateFormatter.format(billingDate);
-    
-    // Create current month bill
+
     final currentMonthBill = {
       'month': currentMonthStr,
-      'status': 'partial', // Match status from database
+      'status': 'partial',
       'billingDate': billingDate,
       'amountPayable': standardAmount,
       'paidAmount': 0,
@@ -544,92 +538,77 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
       'isOverdue': false,
       'isCurrentMonth': true,
     };
-    
+
     setState(() {
       _currentMonthBillDate = formattedDate;
       _standardMonthlyAmount = currencyFormatter.format(standardAmount);
       _totalArrears = 'LKR 0.00';
 
       _currentMonthBillData = currentMonthBill;
-      
-      // Only add current month bill to the bills list
+
       _bills = [currentMonthBill];
-      
-      // Save to shared preferences to sync with dashboard
+
       _saveToSharedPreferences();
     });
   }
 
-  // Parse amount value from various formats
   double _parseAmount(dynamic amount) {
     if (amount is num) {
       return amount.toDouble();
     } else if (amount is String) {
       try {
-        // Remove all non-numeric characters except decimal point
         String cleanedString = amount.replaceAll(RegExp(r'[^0-9.]'), '');
         return double.parse(cleanedString);
       } catch (_) {
-        return 9890.00; // Updated default value to match database
+        return 0000.00;
       }
     }
-    return 9890.00; // Updated default value to match database
+    return 0000.00;
   }
 
-  // Process payment data from snapshot
   void _processPaymentData(QuerySnapshot querySnapshot) {
     if (!mounted) return;
-    
+
     try {
       final currencyFormatter = NumberFormat.currency(
         symbol: 'LKR ',
         decimalDigits: 2,
       );
-      
+
       final dateFormatter = DateFormat('dd/MM/yyyy');
-      
+
       if (querySnapshot.docs.isNotEmpty) {
-        // Sort the payments to ensure we have the most recent one
-        final payments = querySnapshot.docs
-            .map((doc) {
+        final payments =
+            querySnapshot.docs.map((doc) {
               return doc.data() as Map<String, dynamic>;
-            })
-            .toList();
-        
-        // Find the payment with the most recent date
+            }).toList();
+
         payments.sort((a, b) {
-          // First try by createdAt timestamp for most accurate ordering
           final createdAtA = a['createdAt'] as Timestamp?;
           final createdAtB = b['createdAt'] as Timestamp?;
-          
+
           if (createdAtA != null && createdAtB != null) {
             return createdAtB.compareTo(createdAtA);
           }
-          
-          // Then fall back to paymentDate
+
           final dateA = _extractPaymentDate(a);
           final dateB = _extractPaymentDate(b);
-          
+
           if (dateA != null && dateB != null) {
             return dateB.compareTo(dateA);
           }
-          
-          // If one has a date and the other doesn't, prioritize the one with date
+
           if (dateA != null) return -1;
           if (dateB != null) return 1;
-          
+
           return 0;
         });
-        
+
         if (payments.isNotEmpty) {
           final payment = payments.first;
-          
-          // Get amount (try multiple possible field names)
-          dynamic amount = payment['paymentAmount'] ?? 
-                        payment['amount'] ?? 
-                        0;
-          
-          // Convert amount to num type to handle both int and double
+
+          dynamic amount = payment['paymentAmount'] ?? payment['amount'] ?? 0;
+
           num paymentAmount;
           if (amount is num) {
             paymentAmount = amount;
@@ -640,63 +619,61 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
               paymentAmount = 0;
             }
           }
-          
-          // Get payment date
+
           String formattedDate = 'N/A';
-          
-          // First try direct paymentDate field
+
           if (payment.containsKey('paymentDate')) {
             final paymentDate = payment['paymentDate'];
             if (paymentDate is String) {
-              // Try to parse date string in various formats
               try {
                 final date = DateTime.parse(paymentDate);
                 formattedDate = dateFormatter.format(date);
               } catch (e) {
-                // If the string is already in a readable format, use it directly
                 formattedDate = paymentDate;
               }
             } else if (paymentDate is Timestamp) {
               formattedDate = dateFormatter.format(paymentDate.toDate());
             }
           } else if (payment.containsKey('createdAt')) {
-            // Fall back to createdAt
             final createdAt = payment['createdAt'];
             if (createdAt is Timestamp) {
               formattedDate = dateFormatter.format(createdAt.toDate());
             }
           } else {
-            // Try other date fields
             final dateTime = _extractPaymentDate(payment);
             if (dateTime != null) {
               formattedDate = dateFormatter.format(dateTime);
             }
           }
-          
+
           setState(() {
             _lastPaymentAmount = currencyFormatter.format(paymentAmount);
             _lastPaymentDate = formattedDate;
-            
-            // Update current month bill status based on payment
+
             if (_currentMonthBillData != null) {
               final paymentDate = _extractPaymentDate(payment);
-              
-              if (paymentDate != null && 
-                  paymentDate.year == 2025 && 
+
+              if (paymentDate != null &&
+                  paymentDate.year == 2025 &&
                   paymentDate.month == 6) {
-                // If payment is for current month, check if it fully covers the amount
-                final amountPayable = _currentMonthBillData!['amountPayable'] as num;
-                final paidAmount = (_currentMonthBillData!['paidAmount'] as num) + paymentAmount;
-                
+                final amountPayable =
+                    _currentMonthBillData!['amountPayable'] as num;
+                final paidAmount =
+                    (_currentMonthBillData!['paidAmount'] as num) +
+                    paymentAmount;
+
                 _currentMonthBillData!['paidAmount'] = paidAmount;
-                _currentMonthBillData!['remainingAmount'] = amountPayable > paidAmount ? 
-                                                          amountPayable - paidAmount : 0;
-                _currentMonthBillData!['formattedPaid'] = currencyFormatter.format(paidAmount);
-                _currentMonthBillData!['formattedRemaining'] = currencyFormatter.format(
-                  amountPayable > paidAmount ? amountPayable - paidAmount : 0
-                );
-                
-                // Update status based on payment
+                _currentMonthBillData!['remainingAmount'] =
+                    amountPayable > paidAmount ? amountPayable - paidAmount : 0;
+                _currentMonthBillData!['formattedPaid'] = currencyFormatter
+                    .format(paidAmount);
+                _currentMonthBillData!['formattedRemaining'] = currencyFormatter
+                    .format(
+                      amountPayable > paidAmount
+                          ? amountPayable - paidAmount
+                          : 0,
+                    );
+
                 if (paidAmount >= amountPayable) {
                   _currentMonthBillData!['status'] = 'paid';
                   _currentMonthBillData!['isPaid'] = true;
@@ -729,38 +706,35 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
     }
   }
 
-  // Helper method to extract payment date from different fields
   DateTime? _extractPaymentDate(Map<String, dynamic> payment) {
-    // Try all possible date fields
     final dateFields = [
-      'paymentDate', 
-      'date', 
-      'timestamp', 
-      'createdAt', 
+      'paymentDate',
+      'date',
+      'timestamp',
+      'createdAt',
       'created_at',
       'updatedAt',
-      'updated_at'
+      'updated_at',
     ];
-    
+
     for (final field in dateFields) {
       if (payment.containsKey(field)) {
         final value = payment[field];
-        
+
         if (value is Timestamp) {
           return value.toDate();
         } else if (value is String && value.isNotEmpty) {
           try {
             return DateTime.parse(value);
           } catch (_) {
-            // If the date string format is DD/MM/YYYY
             if (value.contains('/')) {
               try {
                 final parts = value.split('/');
                 if (parts.length == 3) {
                   return DateTime(
-                    int.parse(parts[2]), // year
-                    int.parse(parts[1]), // month
-                    int.parse(parts[0]), // day
+                    int.parse(parts[2]),
+                    int.parse(parts[1]),
+                    int.parse(parts[0]),
                   );
                 }
               } catch (_) {}
@@ -769,29 +743,25 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
         }
       }
     }
-    
+
     return null;
   }
 
-  // Generate and download bill PDF
   Future<void> _generateAndDownloadBillPDF(Map<String, dynamic> bill) async {
     final pdf = pw.Document();
-    
+
     try {
-      // Capture the locale before any async operations
       final locale = Localizations.localeOf(context);
-      
-      // Load custom fonts
+
       final sinhalaFont = pw.Font.ttf(
         await rootBundle.load('assets/fonts/pdf/Iskoola Pota Regular.ttf'),
       );
       final tamilFont = pw.Font.ttf(
         await rootBundle.load('assets/fonts/pdf/NotoSansTamil-Regular.ttf'),
       );
-      
-      // Select fonts based on already captured locale
+
       List<pw.Font> fallbackFonts = [];
-      
+
       if (locale.languageCode == 'si') {
         fallbackFonts = [sinhalaFont, tamilFont];
       } else if (locale.languageCode == 'ta') {
@@ -799,8 +769,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
       } else {
         fallbackFonts = [sinhalaFont, tamilFont];
       }
-      
-      // Set theme with fallback fonts
+
       pdf.addPage(
         pw.MultiPage(
           theme: pw.ThemeData.withFont(
@@ -810,19 +779,18 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
           build: (pw.Context context) => [],
         ),
       );
-      
-      // Load logo
+
       final logoImage = await imageFromAssetBundle(
         'assets/images/liability/letterhead.png',
       );
-      
-      // Format dates
+
       final dateFormatter = DateFormat('dd MMMM yyyy');
       final billDate = bill['billingDate'] as DateTime?;
-      final formattedBillDate = billDate != null 
-          ? dateFormatter.format(billDate) 
-          : bill['formattedDate'];
-      
+      final formattedBillDate =
+          billDate != null
+              ? dateFormatter.format(billDate)
+              : bill['formattedDate'];
+
       pdf.addPage(
         pw.Page(
           margin: const pw.EdgeInsets.all(20),
@@ -849,8 +817,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                     ),
                   ),
                   pw.SizedBox(height: 30),
-                  
-                  // Customer Info
+
                   pw.Row(
                     crossAxisAlignment: pw.CrossAxisAlignment.start,
                     children: [
@@ -905,9 +872,12 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                               'Status: ${bill['status'].toUpperCase()}',
                               style: pw.TextStyle(
                                 fontSize: 14,
-                                color: bill['isPaid'] 
-                                    ? PdfColors.green 
-                                    : (bill['isOverdue'] ? PdfColors.red : PdfColors.black),
+                                color:
+                                    bill['isPaid']
+                                        ? PdfColors.green
+                                        : (bill['isOverdue']
+                                            ? PdfColors.red
+                                            : PdfColors.black),
                                 fontWeight: pw.FontWeight.bold,
                               ),
                             ),
@@ -916,10 +886,9 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                       ),
                     ],
                   ),
-                  
+
                   pw.SizedBox(height: 30),
-                  
-                  // Bill Details
+
                   pw.Container(
                     decoration: pw.BoxDecoration(
                       color: PdfColors.grey200,
@@ -947,8 +916,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                         ),
                         pw.Divider(),
                         pw.SizedBox(height: 10),
-                        
-                        // Bill line item
+
                         pw.Row(
                           mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
                           children: [
@@ -956,11 +924,12 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                             pw.Text(bill['formattedAmount']),
                           ],
                         ),
-                        
+
                         if (bill['isPartiallyPaid']) ...[
                           pw.SizedBox(height: 10),
                           pw.Row(
-                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
                             children: [
                               pw.Text('Amount Paid'),
                               pw.Text('(${bill['formattedPaid']})'),
@@ -968,26 +937,35 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                           ),
                           pw.SizedBox(height: 10),
                           pw.Row(
-                            mainAxisAlignment: pw.MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                                pw.MainAxisAlignment.spaceBetween,
                             children: [
                               pw.Text(
                                 'Balance Due',
-                                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                                style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
                               ),
                               pw.Text(
-                                NumberFormat.currency(symbol: 'LKR ', decimalDigits: 2)
-                                    .format(bill['remainingAmount']),
-                                style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
+                                NumberFormat.currency(
+                                  symbol: 'LKR ',
+                                  decimalDigits: 2,
+                                ).format(bill['remainingAmount']),
+                                style: pw.TextStyle(
+                                  fontWeight: pw.FontWeight.bold,
+                                ),
                               ),
                             ],
                           ),
                         ],
-                        
+
                         if (bill['isPaid']) ...[
                           pw.SizedBox(height: 20),
                           pw.Container(
                             width: double.infinity,
-                            padding: const pw.EdgeInsets.symmetric(vertical: 10),
+                            padding: const pw.EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
                             decoration: pw.BoxDecoration(
                               color: PdfColors.green100,
                               borderRadius: pw.BorderRadius.circular(5),
@@ -1003,12 +981,14 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                             ),
                           ),
                         ],
-                        
+
                         if (bill['isOverdue'] && !bill['isPaid']) ...[
                           pw.SizedBox(height: 20),
                           pw.Container(
                             width: double.infinity,
-                            padding: const pw.EdgeInsets.symmetric(vertical: 10),
+                            padding: const pw.EdgeInsets.symmetric(
+                              vertical: 10,
+                            ),
                             decoration: pw.BoxDecoration(
                               color: PdfColors.red100,
                               borderRadius: pw.BorderRadius.circular(5),
@@ -1027,10 +1007,9 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                       ],
                     ),
                   ),
-                  
+
                   pw.SizedBox(height: 30),
-                  
-                  // Footer
+
                   pw.Container(
                     width: double.infinity,
                     padding: const pw.EdgeInsets.all(15),
@@ -1049,17 +1028,19 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                           ),
                         ),
                         pw.SizedBox(height: 10),
-                        pw.Text('Please make your payment at our nearest branch.'),
+                        pw.Text(
+                          'Please make your payment at our nearest branch.',
+                        ),
                         pw.Text('Account Number: $_accountNumber'),
                         pw.SizedBox(height: 15),
                         pw.Text(
-                          'Payment Hotline: 0252236432',
+                          'Payment Hotline: 025 2236432',
                           style: pw.TextStyle(fontWeight: pw.FontWeight.bold),
                         ),
                       ],
                     ),
                   ),
-                  
+
                   pw.Spacer(),
                   pw.Center(
                     child: pw.Text(
@@ -1076,14 +1057,13 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
           },
         ),
       );
-      
+
       await Printing.layoutPdf(onLayout: (format) => pdf.save());
       await Printing.sharePdf(
         bytes: await pdf.save(),
         filename: 'bill_${bill['month']}.pdf',
       );
     } catch (e) {
-      // Check if widget is still mounted before accessing context
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -1095,7 +1075,6 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
     }
   }
 
-  // Build card widget for financial info - modernized design
   Widget _buildCard({
     required String title,
     String? date,
@@ -1109,10 +1088,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
         gradient: LinearGradient(
           begin: Alignment.topLeft,
           end: Alignment.bottomRight,
-          colors: [
-            color,
-            color.withAlpha((0.8 * 255).round()),
-          ],
+          colors: [color, color.withAlpha((0.8 * 255).round())],
         ),
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
@@ -1141,17 +1117,17 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                 ),
                 if (date != null && date.isNotEmpty && date != 'N/A')
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 5,
+                    ),
                     decoration: BoxDecoration(
-                      color: Colors.white.withAlpha(51), // 0.2 * 255 ≈ 51
+                      color: Colors.white.withAlpha(51),
                       borderRadius: BorderRadius.circular(20),
                     ),
                     child: Text(
                       date,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 12,
-                      ),
+                      style: const TextStyle(color: Colors.white, fontSize: 12),
                     ),
                   ),
               ],
@@ -1173,22 +1149,17 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
       ),
     );
   }
-  
-  // Build bill item for bills tab - fixed for correct sizing
-  Widget _buildBillItem(Map<String, dynamic> bill) {
 
+  Widget _buildBillItem(Map<String, dynamic> bill) {
     final isPartiallyPaid = bill['isPartiallyPaid'];
 
-    
-    // Show remaining amount for partial payments
     String amountDisplay;
     if (isPartiallyPaid) {
       amountDisplay = bill['formattedRemaining'];
     } else {
       amountDisplay = bill['formattedAmount'];
     }
-    
-    // Fixed width for bill card as seen in the image
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.only(bottom: 12),
@@ -1198,7 +1169,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withAlpha(13), // 0.05 * 255 ≈ 13
+            color: Colors.black.withAlpha(13),
             blurRadius: 8,
             offset: const Offset(0, 2),
           ),
@@ -1213,12 +1184,11 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
             child: Row(
               children: [
-                // Calendar icon
                 Container(
                   width: 45,
                   height: 45,
                   decoration: BoxDecoration(
-                    color: Colors.purple.withAlpha(26), // 0.1 * 255 ≈ 26
+                    color: Colors.purple.withAlpha(26),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: const Icon(
@@ -1228,8 +1198,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                   ),
                 ),
                 const SizedBox(width: 12),
-                
-                // Bill details - expanded to take available space
+
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -1245,9 +1214,12 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                           ),
                           Container(
                             margin: const EdgeInsets.only(left: 8),
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 8,
+                              vertical: 2,
+                            ),
                             decoration: BoxDecoration(
-                              color: Colors.purple.withAlpha(26), // 0.1 * 255 ≈ 26
+                              color: Colors.purple.withAlpha(26),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Text(
@@ -1280,15 +1252,14 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                     ],
                   ),
                 ),
-                
-                // Download icon with adequate spacing
+
                 const SizedBox(width: 8),
                 Padding(
                   padding: const EdgeInsets.only(left: 8),
                   child: Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      color: Colors.purple.withAlpha(26), // 0.1 * 255 ≈ 26
+                      color: Colors.purple.withAlpha(26),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(
@@ -1315,9 +1286,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
       backgroundColor: const Color(0xFFFEF7FF),
       body: Column(
         children: [
-          const SizedBox(height: 80), // space for status bar
-          
-          // Custom AppBar - same styling as LiabilityScreen
+          const SizedBox(height: 80),
           Stack(
             alignment: Alignment.center,
             children: [
@@ -1347,9 +1316,9 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
               ),
             ],
           ),
-          
+
           const SizedBox(height: 30),
-          
+
           if (_error != null)
             Expanded(
               child: Center(
@@ -1380,7 +1349,10 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                         style: ElevatedButton.styleFrom(
                           backgroundColor: const Color(0xFF6C17A6),
                           foregroundColor: Colors.white,
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 24,
+                            vertical: 12,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(10),
                           ),
@@ -1396,7 +1368,6 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
             Expanded(
               child: Column(
                 children: [
-                  // Header Section - Styled like Liability Screen
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 25),
                     child: Column(
@@ -1428,7 +1399,9 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                                     ),
                                     Text(
                                       today,
-                                      style: const TextStyle(color: Colors.grey),
+                                      style: const TextStyle(
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -1437,8 +1410,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                           ),
                         ),
                         const SizedBox(height: 10),
-                        
-                        // Improved Tab Bar
+
                         Container(
                           height: 48,
                           decoration: BoxDecoration(
@@ -1446,7 +1418,7 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                             borderRadius: BorderRadius.circular(10),
                             boxShadow: [
                               BoxShadow(
-                                color: Colors.black.withAlpha(18), // 0.07 * 255 ≈ 18
+                                color: Colors.black.withAlpha(18),
                                 blurRadius: 8,
                                 offset: const Offset(0, 2),
                               ),
@@ -1477,19 +1449,17 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                             dividerColor: Colors.transparent,
                           ),
                         ),
-                        
+
                         const SizedBox(height: 10),
                         const Divider(thickness: 1),
                       ],
                     ),
                   ),
-                  
-                  // Tab Views
+
                   Expanded(
                     child: TabBarView(
                       controller: _tabController,
                       children: [
-                        // Bill Summary Tab
                         SingleChildScrollView(
                           padding: const EdgeInsets.symmetric(horizontal: 25),
                           child: Column(
@@ -1502,54 +1472,58 @@ class _BillScreenState extends State<BillScreen> with SingleTickerProviderStateM
                                 amount: _totalArrears,
                                 color: const Color(0xFFAA4A4A),
                               ),
-                              
-                              // Monthly Bill Card - using synced values
+
                               _buildCard(
                                 title: t.monthly_bill,
                                 date: _currentMonthBillDate,
                                 amount: _standardMonthlyAmount,
                                 color: const Color(0xFF626EB2),
                               ),
-                              
+
                               _buildCard(
                                 title: t.last_payment_amount,
-                                date: _lastPaymentDate.isEmpty ? 'N/A' : _lastPaymentDate,
+                                date:
+                                    _lastPaymentDate.isEmpty
+                                        ? 'N/A'
+                                        : _lastPaymentDate,
                                 amount: _lastPaymentAmount,
                                 color: const Color(0xFF4F5773),
                               ),
                             ],
                           ),
                         ),
-                        
-                        // Bills Tab - Only showing the current month bill with improved layout
+
                         _bills.isEmpty
                             ? Center(
-                                child: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Icon(
-                                      Icons.receipt_long,
-                                      size: 70,
-                                      color: Colors.grey.shade400,
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(
+                                    Icons.receipt_long,
+                                    size: 70,
+                                    color: Colors.grey.shade400,
+                                  ),
+                                  const SizedBox(height: 16),
+                                  Text(
+                                    'No bills available',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.grey.shade600,
                                     ),
-                                    const SizedBox(height: 16),
-                                    Text(
-                                      'No bills available',
-                                      style: TextStyle(
-                                        fontSize: 18,
-                                        color: Colors.grey.shade600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              )
-                            : ListView.builder(
-                                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 16),
-                                itemCount: _bills.length,
-                                itemBuilder: (context, index) {
-                                  return _buildBillItem(_bills[index]);
-                                },
+                                  ),
+                                ],
                               ),
+                            )
+                            : ListView.builder(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 25,
+                                vertical: 16,
+                              ),
+                              itemCount: _bills.length,
+                              itemBuilder: (context, index) {
+                                return _buildBillItem(_bills[index]);
+                              },
+                            ),
                       ],
                     ),
                   ),
